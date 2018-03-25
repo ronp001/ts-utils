@@ -10,6 +10,7 @@
     "relink": "yarn unlink && yarn link",
     "test:integration": "jest --testRegex 'src(/__(integration_)?tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$' 'src/__integration_tests__/integration.test.ts'",
     "test": "jest",
+    "build": "echo '*** no build. currently usable only if imported by other typescript projects.'",
     "test:watch": "jest --watch"
   },
   "dependencies": {
