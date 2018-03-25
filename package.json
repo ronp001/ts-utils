@@ -10,8 +10,7 @@
     "relink": "yarn unlink && yarn link",
     "test:integration": "jest --testRegex 'src(/__(integration_)?tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$' 'src/__integration_tests__/integration.test.ts'",
     "test": "jest",
-    "test:watch": "jest --watch",
-    "doc": "typedoc --out ./doc ./src"
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "isbinaryfile": "^3.0.2",

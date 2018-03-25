@@ -284,7 +284,7 @@ describe("AbsPath", () => {
             expect(found_up['/base/inner/file-in-inner']).toBeUndefined()
         })
 
-        test.skip('print traversal', () => {
+        test('print traversal', () => {
             let p = new AbsPath('/')
             p.foreachEntryInDir((e:AbsPath, direction:"down"|"up"|null) => {
                 console.log(e.toString(), direction)
