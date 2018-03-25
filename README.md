@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/ronp001/ts-utils.svg?branch=master)](https://travis-ci.org/ronp001/ts-utils)
+
 # ts-utils
 
 This is where I keep various reusable utility classes for my typescript projects.  Some are more robust than others.
