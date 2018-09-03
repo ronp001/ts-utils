@@ -4,9 +4,7 @@ os:
 - osx
 node_js:
 - '6'
-- '7'
 - '8'
-- 'node'
 script:
 - yarn build
 - yarn test
