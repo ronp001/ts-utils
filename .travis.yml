@@ -8,3 +8,12 @@ node_js:
 script:
 - yarn build
 - yarn test
+deploy:
+  provider: npm
+  email: ronppub@gmail.com
+  api_key:
+    secure: XFBAWK292+bhkB/n90uWju+Dx9B71HPWzyqcXAUUyZUBcc9/OeuxLIkfoYERL9GsWjoqCluu4Ha/u1QyaOrlb1DwdmjTs6IzIBy+si/Ig3spfv2YSpRHPcrw6k2bitXdQZE65CNyET+ykQ4AYBfNksv6dNDS+q7QRhxgPqgrfKAYWx0Gj7KLPPn89kYDUqHQgRgretrzpgQpPaJDHZnlxljTLbphDCdaQH64ul5HEqjIXms7QQDcINDx9JA/vt59IrJ61elvqTHTWmhBigHm+2KL5ZJPkRS3YXHSD7AKBVuCP3IJXM+JDAM4awXtMg+gi1tl52ZwaLIlECncpJNF/HnqnuQzGqypZt837Rl+2d6X0Ir1nh8uFGh8myWb824mQwm0Z5L7Z3PuqoJ8tsvTr9BRNPukqzk+G2WLinlZ8vZ42YUuREbr3jB5jkXQNcP797L7nQtZyrxFelXbOXXUO112kk3ZP/Iz4YbAvai+CUCTLLlR0HYyRGs98BJqyINKJ6phLaYMmAkeYGcG2zj5L2Pemf8vrXY3LZ4ifgNhR/gGT4G9QlWc57KYrYRUB+lPQZZlvHR5k1+ThoUOctGebJVVMpmLyNSqUHk3PgsGwNlG9vj9zh28UV0ctKsa3rK9X8HitBQPEoN3Yo6v3rw6aSFMSqPRnd5RdxCvZxBuBQM=
+  on:
+    tags: true
+    repo: ronp001/ts-utils
+    branch: master
