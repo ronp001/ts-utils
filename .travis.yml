@@ -17,3 +17,4 @@ deploy:
     tags: true
     repo: ronp001/ts-utils
     branch: master
+    skip_cleanup: true
