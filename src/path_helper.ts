@@ -317,7 +317,7 @@ export class AbsPath {
      * @returns file contents as a buffer object
      */
     public get contentsBuffer(): Buffer {
-        if (this.abspath == null || !this.isFile) return new Buffer(0)
+        if (this.abspath == null || !this.isFile) return Buffer.alloc(0)
 
         return fs.readFileSync(this.abspath)
     }
