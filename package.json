@@ -5,8 +5,8 @@
   "repository": "http://github.com/ronp001/ts-utils",
   "author": "Ron Perry",
   "license": "MIT",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "clean": "rm -rf dist/",
     "relink": "yarn unlink && yarn link",
