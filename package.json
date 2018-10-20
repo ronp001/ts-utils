@@ -7,6 +7,9 @@
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "clean": "rm -rf dist/",
     "relink": "yarn unlink && yarn link",
@@ -26,8 +29,10 @@
   "devDependencies": {
     "@types/jest": "^22.1.2",
     "@types/mock-fs": "^3.6.30",
+    "@types/tmp": "^0.0.33",
     "jest": "^23.4.0",
     "mock-fs": "^4.4.2",
+    "tmp": "^0.0.33",
     "ts-jest": "^23.1.0",
     "typescript": "^3.0.3"
   },

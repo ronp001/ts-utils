@@ -2,7 +2,7 @@
 import * as mockfs from 'mock-fs'
 import * as fs from 'fs'
 import * as path from 'path'
-import * as _ from 'lodash'
+import _ from 'lodash';
 import { AbsPath, MockFSHelper } from "../index"
 
 
