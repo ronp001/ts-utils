@@ -11,6 +11,7 @@ tmp.setGracefulCleanup()
 
 let tmpdir_obj: tmp.SynchrounousResult
 let tmpdir: AbsPath
+let projdir: AbsPath
 
 
 beforeEach(async () => {
@@ -26,7 +27,8 @@ afterEach(async () => {
 
 
 function init_simple_repo() {
-    const gitbase = tmpdir.add('proj').add('.git')
+    projdir = tmpdir.add('proj')
+    const gitbase = projdir.add('.git')
     gitbase.add('objects').add('info').mkdirs()
     gitbase.add('objects').add('pack').mkdirs()
     gitbase.add('refs').add('heads').mkdirs()
@@ -51,6 +53,16 @@ describe('git logic', () => {
         let gl = new GitLogic(tmpdir.add('proj'));
         expect(gl.is_repo).toBeTruthy()
 
-        
+        projdir.add('.gitignore').saveStrSync('ignored')
+        projdir.add('regularfile').saveStrSync('this file is not ignored')
+        projdir.add('ignored').saveStrSync('this file is ignored')
+        projdir.add('subdir').mkdirs()
+        projdir.add('subdir').add('regfile2').saveStrSync('this file should not be ignored')
+        projdir.add('subdir').add('ignored').saveStrSync('this file should be ignored')
+
+        expect(gl.check_ignore(projdir.add('ignored').abspath)).toBeTruthy()
+        expect(gl.check_ignore(projdir.add('subdir/ignored').abspath)).toBeTruthy()
+        expect(gl.check_ignore(projdir.add('regularfile').abspath)).toBeFalsy()
+        expect(gl.check_ignore(projdir.add('subdir/regfile2').abspath)).toBeFalsy()
     })
 })

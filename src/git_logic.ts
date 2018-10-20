@@ -8,6 +8,7 @@ import chalk from "chalk"
 export class ErrorNotConnectedToProject extends Error { }
 export class ErrorInvalidPath extends Error { }
 export class ErrorAddFailed extends Error { }
+export class ErrorCheckIgnoreFailed extends Error { }
 
 export enum GitState {
     Undefined = "Undefined", // project path was not set
@@ -43,7 +44,7 @@ export class GitLogic {
     public runcmd = this._runcmd // allow mocking
     private keep_color: boolean = false
 
-    private _runcmd(gitcmd: string, args: string[] = []): Buffer | string | string[] {
+    private _runcmd(gitcmd: string, args: string[] = [], allowed_statuses: number[] = []): Buffer | string | string[] {
         let old_dir: string | null = null
         if (this._path.abspath == null) {
             throw new ErrorNotConnectedToProject("GitLogic: command executed before setting project_dir")
@@ -74,6 +75,11 @@ export class GitLogic {
             }
             return result
         } catch (e) {
+            console.log("e.status:", e.status)
+            if (allowed_statuses.indexOf(e.status) > -1) {
+                console.log(chalk.black(`git command returned with allowed status ${e.status}`))
+                return ""
+            }
             console.error(chalk.cyan(`git command failed: ${e}`))
             throw e
         } finally {
@@ -257,6 +263,23 @@ export class GitLogic {
         } catch (e) {
             throw new ErrorAddFailed(e.message)
         }
+    }
+
+    public check_ignore(path: string): boolean {
+        let lines: string[]
+        let abspath = new AbsPath(path).realpath.abspath
+
+        if (abspath == null) {
+            throw new ErrorInvalidPath(path)
+        }
+
+        try {
+            lines = this.to_lines(this.runcmd("check-ignore", [abspath], [1]))
+        } catch (e) {
+            throw new ErrorCheckIgnoreFailed(e.message)
+        }
+
+        return lines.indexOf(abspath) > -1
     }
 
     public commit(comment: string) {
