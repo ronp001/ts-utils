@@ -1,6 +1,6 @@
 {
   "name": "@ronp001/ts-utils",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "miscellaneous typescript modules",
   "repository": "http://github.com/ronp001/ts-utils",
   "author": "Ron Perry",
@@ -24,6 +24,7 @@
   "dependencies": {
     "@types/lodash": "*",
     "isbinaryfile": "^3.0.2",
+    "commander": "^2.14.1",  
     "lodash": "^4.17.5"
   },
   "devDependencies": {
