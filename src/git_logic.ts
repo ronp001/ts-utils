@@ -265,6 +265,20 @@ export class GitLogic {
         }
     }
 
+    public ls_files_as_abspath(): AbsPath[] {
+        let files = this.ls_files()
+        let result: AbsPath[] = []
+        for (let file of files) {
+            result.push(this.project_dir.add(file))
+        }
+        return result
+    }
+
+    public ls_files(): string[] {
+        let files = this.to_lines(this.runcmd("ls-files"))
+        return files
+    }
+
     public check_ignore(path: string): boolean {
         let lines: string[]
         let abspath = new AbsPath(path).realpath.abspath

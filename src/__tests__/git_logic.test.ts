@@ -65,4 +65,22 @@ describe('git logic', () => {
         expect(gl.check_ignore(projdir.add('regularfile').abspath)).toBeFalsy()
         expect(gl.check_ignore(projdir.add('subdir/regfile2').abspath)).toBeFalsy()
     })
+
+    test('ls files', () => {
+        let gl = new GitLogic(tmpdir.add('proj'));
+        expect(gl.is_repo).toBeTruthy()
+
+        const p = projdir.add('regularfile')
+        p.saveStrSync('this file is not ignored')
+
+        gl.add(p.abspath)
+        gl.commit('added a file')
+
+        const files = gl.ls_files()
+        expect(files).toEqual(['regularfile'])
+
+        const paths = gl.ls_files_as_abspath()
+        expect(paths).toEqual([p])
+
+    })
 })
