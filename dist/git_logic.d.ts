@@ -6,6 +6,8 @@ export declare class ErrorInvalidPath extends Error {
 }
 export declare class ErrorAddFailed extends Error {
 }
+export declare class ErrorCheckIgnoreFailed extends Error {
+}
 export declare enum GitState {
     Undefined = "Undefined",
     NonRepo = "Non Repo",
@@ -15,11 +17,12 @@ export declare enum GitState {
     OpInProgress = "OpInProgress"
 }
 export declare class GitLogic {
-    constructor(path?: AbsPath);
+    private log;
+    constructor(path?: AbsPath, log_function?: (...args: any[]) => void);
     auto_connect(): void;
     private _path;
     project_dir: AbsPath;
-    runcmd: (gitcmd: string, args?: string[]) => string | string[] | Buffer;
+    runcmd: (gitcmd: string, args?: string[], allowed_statuses?: number[]) => string | string[] | Buffer;
     private keep_color;
     private _runcmd;
     readonly state: GitState;
@@ -50,7 +53,11 @@ export declare class GitLogic {
     create_tag(tagname: string): void;
     move_tag_to_head(tagname: string): void;
     move_tag(tagname: string, ref: string): void;
+    mv(from: string, to: string): void;
     add(path: string | string[]): void;
+    ls_files_as_abspath(): AbsPath[];
+    ls_files(): string[];
+    check_ignore(path: string): boolean;
     commit(comment: string): void;
     commit_allowing_empty(comment: string): void;
 }

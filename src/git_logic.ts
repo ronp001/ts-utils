@@ -8,6 +8,7 @@ import chalk from "chalk"
 export class ErrorNotConnectedToProject extends Error { }
 export class ErrorInvalidPath extends Error { }
 export class ErrorAddFailed extends Error { }
+export class ErrorCheckIgnoreFailed extends Error { }
 
 export enum GitState {
     Undefined = "Undefined", // project path was not set
@@ -19,10 +20,13 @@ export enum GitState {
 }
 
 export class GitLogic {
-    public constructor(path?: AbsPath) {
+    private log: (...args: any[]) => void
+
+    public constructor(path?: AbsPath, log_function?: (...args: any[]) => void) {
         if (path != null) {
             this._path = path
         }
+        this.log = log_function ? log_function : console.log
     }
 
     public auto_connect() {
@@ -43,7 +47,7 @@ export class GitLogic {
     public runcmd = this._runcmd // allow mocking
     private keep_color: boolean = false
 
-    private _runcmd(gitcmd: string, args: string[] = []): Buffer | string | string[] {
+    private _runcmd(gitcmd: string, args: string[] = [], allowed_statuses: number[] = []): Buffer | string | string[] {
         let old_dir: string | null = null
         if (this._path.abspath == null) {
             throw new ErrorNotConnectedToProject("GitLogic: command executed before setting project_dir")
@@ -64,16 +68,21 @@ export class GitLogic {
             } catch (e) { // process.cwd() throws an error if the current directory does not exist
                 process.chdir(this._path.abspath)
             }
-            console.log(dirinfo + chalk.blue("git " + [gitcmd].concat(args).join(" ")))
+            this.log(dirinfo + chalk.blue("git " + [gitcmd].concat(args).join(" ")))
             let result = execFileSync('git', [gitcmd].concat(args))
             if (this.keep_color) {
-                console.log(result.toString())
+                this.log(result.toString())
                 this.keep_color = false
             } else {
-                console.log(chalk.cyan(result.toString()))
+                this.log(chalk.cyan(result.toString()))
             }
             return result
         } catch (e) {
+            this.log("e.status:", e.status)
+            if (allowed_statuses.indexOf(e.status) > -1) {
+                this.log(chalk.black(`git command returned with allowed status ${e.status}`))
+                return ""
+            }
             console.error(chalk.cyan(`git command failed: ${e}`))
             throw e
         } finally {
@@ -244,6 +253,10 @@ export class GitLogic {
         this.runcmd("tag", [tagname, ref])
     }
 
+    public mv(from: string, to: string) {
+        this.runcmd("mv", [from, to])
+    }
+
     public add(path: string | string[]) {
         let paths: string[]
         if (path instanceof Array) {
@@ -257,6 +270,37 @@ export class GitLogic {
         } catch (e) {
             throw new ErrorAddFailed(e.message)
         }
+    }
+
+    public ls_files_as_abspath(): AbsPath[] {
+        let files = this.ls_files()
+        let result: AbsPath[] = []
+        for (let file of files) {
+            result.push(this.project_dir.add(file))
+        }
+        return result
+    }
+
+    public ls_files(): string[] {
+        let files = this.to_lines(this.runcmd("ls-files"))
+        return files
+    }
+
+    public check_ignore(path: string): boolean {
+        let lines: string[]
+        let abspath = new AbsPath(path).realpath.abspath
+
+        if (abspath == null) {
+            throw new ErrorInvalidPath(path)
+        }
+
+        try {
+            lines = this.to_lines(this.runcmd("check-ignore", [abspath], [1]))
+        } catch (e) {
+            throw new ErrorCheckIgnoreFailed(e.message)
+        }
+
+        return lines.indexOf(abspath) > -1
     }
 
     public commit(comment: string) {

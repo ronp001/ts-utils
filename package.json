@@ -1,12 +1,15 @@
 {
   "name": "@ronp001/ts-utils",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "miscellaneous typescript modules",
   "repository": "http://github.com/ronp001/ts-utils",
   "author": "Ron Perry",
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "clean": "rm -rf dist/",
     "relink": "yarn unlink && yarn link",
@@ -21,13 +24,16 @@
   "dependencies": {
     "@types/lodash": "*",
     "isbinaryfile": "^3.0.2",
+    "commander": "^2.14.1",
     "lodash": "^4.17.5"
   },
   "devDependencies": {
     "@types/jest": "^22.1.2",
     "@types/mock-fs": "^3.6.30",
+    "@types/tmp": "^0.0.33",
     "jest": "^23.4.0",
-    "mock-fs": "^4.4.2",
+    "mock-fs": "^4.7.0",
+    "tmp": "^0.0.33",
     "ts-jest": "^23.1.0",
     "typescript": "^3.0.3"
   },
