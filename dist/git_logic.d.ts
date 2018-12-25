@@ -17,7 +17,8 @@ export declare enum GitState {
     OpInProgress = "OpInProgress"
 }
 export declare class GitLogic {
-    constructor(path?: AbsPath);
+    private log;
+    constructor(path?: AbsPath, log_function?: (...args: any[]) => void);
     auto_connect(): void;
     private _path;
     project_dir: AbsPath;
@@ -52,6 +53,7 @@ export declare class GitLogic {
     create_tag(tagname: string): void;
     move_tag_to_head(tagname: string): void;
     move_tag(tagname: string, ref: string): void;
+    mv(from: string, to: string): void;
     add(path: string | string[]): void;
     ls_files_as_abspath(): AbsPath[];
     ls_files(): string[];

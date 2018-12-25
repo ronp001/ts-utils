@@ -20,10 +20,13 @@ export enum GitState {
 }
 
 export class GitLogic {
-    public constructor(path?: AbsPath) {
+    private log: (...args: any[]) => void
+
+    public constructor(path?: AbsPath, log_function?: (...args: any[]) => void) {
         if (path != null) {
             this._path = path
         }
+        this.log = log_function ? log_function : console.log
     }
 
     public auto_connect() {
@@ -65,19 +68,19 @@ export class GitLogic {
             } catch (e) { // process.cwd() throws an error if the current directory does not exist
                 process.chdir(this._path.abspath)
             }
-            console.log(dirinfo + chalk.blue("git " + [gitcmd].concat(args).join(" ")))
+            this.log(dirinfo + chalk.blue("git " + [gitcmd].concat(args).join(" ")))
             let result = execFileSync('git', [gitcmd].concat(args))
             if (this.keep_color) {
-                console.log(result.toString())
+                this.log(result.toString())
                 this.keep_color = false
             } else {
-                console.log(chalk.cyan(result.toString()))
+                this.log(chalk.cyan(result.toString()))
             }
             return result
         } catch (e) {
-            console.log("e.status:", e.status)
+            this.log("e.status:", e.status)
             if (allowed_statuses.indexOf(e.status) > -1) {
-                console.log(chalk.black(`git command returned with allowed status ${e.status}`))
+                this.log(chalk.black(`git command returned with allowed status ${e.status}`))
                 return ""
             }
             console.error(chalk.cyan(`git command failed: ${e}`))
@@ -248,6 +251,10 @@ export class GitLogic {
     public move_tag(tagname: string, ref: string) {
         this.runcmd("tag", ["-d", tagname])
         this.runcmd("tag", [tagname, ref])
+    }
+
+    public mv(from: string, to: string) {
+        this.runcmd("mv", [from, to])
     }
 
     public add(path: string | string[]) {
