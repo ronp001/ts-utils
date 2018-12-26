@@ -19,6 +19,12 @@ export enum GitState {
     OpInProgress = "OpInProgress" // a rebase or merge operation is in progress
 }
 
+export interface RemoteInfo {
+    name: string,
+    url: string
+}
+
+
 export class GitLogic {
     private log: (...args: any[]) => void
 
@@ -308,5 +314,25 @@ export class GitLogic {
     }
     public commit_allowing_empty(comment: string) {
         this.runcmd("commit", ["--allow-empty", "-m", comment])
+    }
+
+    public add_remote(name: string, url: string) {
+        this.runcmd("remote", ["add", name, url])
+    }
+
+    public get_remotes(): Array<RemoteInfo> {
+        let result: Array<RemoteInfo> = []
+        let lines = this.to_lines(this.runcmd("remote", ["-v"]))
+
+        for (let line of lines) {
+            const s1 = line.split("\t")
+            const name = s1[0]
+            const s2 = s1[1].split(" ")
+            const url = s2[0]
+            if (s2[1] == "(fetch)") {
+                result.push({ name: name, url: url })
+            }
+        }
+        return result
     }
 }

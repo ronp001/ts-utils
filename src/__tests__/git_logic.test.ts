@@ -83,4 +83,27 @@ describe('git logic', () => {
         expect(paths).toEqual([p])
 
     })
+
+    test('remote', () => {
+        let gl = new GitLogic(tmpdir.add('proj'));
+        expect(gl.is_repo).toBeTruthy()
+
+        let remotes = gl.get_remotes()
+        expect(remotes.length).toEqual(0)
+
+        gl.add_remote("remote1", "url1")
+        remotes = gl.get_remotes()
+        expect(remotes.length).toEqual(1)
+        expect(remotes[0].name).toEqual("remote1")
+        expect(remotes[0].url).toEqual("url1")
+
+        gl.add_remote("remote2", "url2")
+        remotes = gl.get_remotes()
+        expect(remotes.length).toEqual(2)
+        expect(remotes[0].name).toEqual("remote1")
+        expect(remotes[0].url).toEqual("url1")
+        expect(remotes[1].name).toEqual("remote2")
+        expect(remotes[1].url).toEqual("url2")
+
+    })
 })
