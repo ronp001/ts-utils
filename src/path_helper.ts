@@ -231,6 +231,11 @@ export class AbsPath {
     }
 
 
+    /**
+     * throws an exception if path validation fails.
+     * @param t what to check for
+     * @returns itself
+     */
     public validate(t: "exists" | "is_dir" | "is_file" | "is_symlink" | "is_binary"): AbsPath {
         if (!this.exists) {
             if (t == "is_dir") {
