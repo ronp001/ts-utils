@@ -144,6 +144,19 @@ export class AbsPath {
         return new AbsPath(parent_dir)
     }
 
+    /**
+     * @param n how many levels up the hierarchy
+     * @returns AbsPath of the directory which is <n> levels up.  (.parents(1) is the same is .parent) 
+     */
+    public parents(n: number): AbsPath {
+        let p: AbsPath = this
+        while (n > 0) {
+            p = p.parent
+            n--
+        }
+        return p
+    }
+
     //------------------------------------------------------------
     // Recognition
     //------------------------------------------------------------
@@ -217,6 +230,46 @@ export class AbsPath {
         return isBinaryFile.sync(this.abspath);
     }
 
+
+    /**
+     * throws an exception if path validation fails.
+     * @param t what to check for
+     * @returns itself
+     */
+    public validate(t: "exists" | "is_dir" | "is_file" | "is_symlink" | "is_binary"): AbsPath {
+        if (!this.exists) {
+            if (t == "is_dir") {
+                throw new Error(`${this.abspath}/ does not exist`)
+            } else {
+                throw new Error(`${this.abspath} does not exist`)
+            }
+        }
+
+        switch (t) {
+            case "exists":
+                break
+
+            case "is_dir":
+                if (!this.isDir) throw new Error(`${this.abspath}/ is not a directory`)
+                break
+
+            case "is_file":
+                if (!this.isFile) throw new Error(`${this.abspath} is not a file`)
+                break
+
+            case "is_symlink":
+                if (!this.isSymLink) throw new Error(`${this.abspath} is not a symlink`)
+                break
+
+            case "is_binary":
+                if (!this.isBinaryFile) throw new Error(`${this.abspath} is not a binary file`)
+                break
+
+            default:
+                throw new Error(`unhandled validation: ${t}`)
+        }
+        return this
+    }
 
     //------------------------------------------------------------
     // Directory Contents
