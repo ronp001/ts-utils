@@ -92,6 +92,11 @@ export declare class AbsPath {
      * @returns true if the file is binary, false otherwise
      */
     readonly isBinaryFile: boolean;
+    /**
+     * throws an exception if path validation fails.
+     * @param t what to check for
+     * @returns itself
+     */
     validate(t: "exists" | "is_dir" | "is_file" | "is_symlink" | "is_binary"): AbsPath;
     /**
      * @returns true if contains a file of the given name, false otherwise
