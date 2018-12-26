@@ -145,6 +145,8 @@ describe("AbsPath", () => {
             let ph = new AbsPath('/dir1/dir11')
             expect(ph.toString()).toEqual("/dir1/dir11")
             expect(ph.parent.toString()).toEqual("/dir1")
+            expect(ph.parents(1).toString()).toEqual("/dir1")
+            expect(ph.parents(2).toString()).toEqual("/")
             expect(ph.parent.parent.toString()).toEqual("/")
             expect(ph.parent.parent.parent.toString()).toEqual("/")
         })
@@ -194,6 +196,21 @@ describe("AbsPath", () => {
             expect(new AbsPath('/base/symlink_to_file1').isSymLink).toBeTruthy()
             expect(new AbsPath('/base/symlink_to_file1').isDir).toBeFalsy()
             expect(new AbsPath('/base/symlink_to_file1').isFile).toBeFalsy()
+
+            // validations
+            const p = new AbsPath('/dir1')
+            expect(() => { p.validate('is_dir') }).not.toThrow()
+            expect(() => { p.validate('is_file') }).toThrow(/dir1.*not a file/)
+            expect(() => { p.validate('is_symlink') }).toThrow(/dir1.*not a symlink/)
+            expect(() => { p.validate('is_binary') }).toThrow(/dir1.*not a binary/)
+            expect(p.validate("is_dir")).toEqual(p)
+
+            const p2 = new AbsPath('/base/symlink_to_file1')
+            expect(() => { p2.validate('is_dir') }).toThrow(/_to_file1.*not a directory/)
+            expect(() => { p2.validate('is_file') }).toThrow(/_to_file1.*not a file/)
+            expect(() => { p2.validate('is_symlink') }).not.toThrow()
+            expect(() => { p2.validate('is_binary') }).toThrow(/_to_file1.*not a binary/)
+            expect(p2.validate("is_symlink")).toEqual(p2)
         })
         test('binary file recognition', () => {
             let p1 = new AbsPath("/base/file1")

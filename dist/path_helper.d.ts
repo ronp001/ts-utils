@@ -62,6 +62,11 @@ export declare class AbsPath {
      */
     readonly parent: AbsPath;
     /**
+     * @param n how many levels up the hierarchy
+     * @returns AbsPath of the directory which is <n> levels up.  (.parents(1) is the same is .parent)
+     */
+    parents(n: number): AbsPath;
+    /**
      * @returns true if root directory of the filesystem, false otherwise
      */
     readonly isRoot: boolean;
@@ -87,6 +92,7 @@ export declare class AbsPath {
      * @returns true if the file is binary, false otherwise
      */
     readonly isBinaryFile: boolean;
+    validate(t: "exists" | "is_dir" | "is_file" | "is_symlink" | "is_binary"): AbsPath;
     /**
      * @returns true if contains a file of the given name, false otherwise
      */
