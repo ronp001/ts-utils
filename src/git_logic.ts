@@ -316,8 +316,12 @@ export class GitLogic {
         this.runcmd("commit", ["--allow-empty", "-m", comment])
     }
 
-    public add_remote(name: string, url: string) {
-        this.runcmd("remote", ["add", name, url])
+    public add_remote(name: string, url: string, track_branch?: string) {
+        let options = ["add", name, url]
+        if (track_branch) {
+            options = options.concat(["-t", track_branch])
+        }
+        this.runcmd("remote", options)
     }
 
     public get_remotes(): Array<RemoteInfo> {
@@ -334,5 +338,13 @@ export class GitLogic {
             }
         }
         return result
+    }
+
+    public fetch(remote?: string) {
+        let options: Array<string> = []
+        if (remote) {
+            options = options.concat([remote])
+        }
+        this.runcmd("fetch", options)
     }
 }

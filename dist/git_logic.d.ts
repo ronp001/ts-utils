@@ -16,6 +16,10 @@ export declare enum GitState {
     Clean = "Clean",
     OpInProgress = "OpInProgress"
 }
+export interface RemoteInfo {
+    name: string;
+    url: string;
+}
 export declare class GitLogic {
     private log;
     constructor(path?: AbsPath, log_function?: (...args: any[]) => void);
@@ -60,4 +64,7 @@ export declare class GitLogic {
     check_ignore(path: string): boolean;
     commit(comment: string): void;
     commit_allowing_empty(comment: string): void;
+    add_remote(name: string, url: string, track_branch?: string): void;
+    get_remotes(): Array<RemoteInfo>;
+    fetch(remote?: string): void;
 }
