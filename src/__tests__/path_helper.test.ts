@@ -34,7 +34,8 @@ let simfs = new MockFSHelper({
         '12file1': "this is 12file1",
         '12file2': "this is 12file2",
         'f': "f in /dir1/dir12",
-    }
+    },
+    '/emptydir': {}
 })
 
 // Prepare path_helper.ts for inclusion in the mocked filesystem
@@ -185,12 +186,16 @@ describe("AbsPath", () => {
             expect(new AbsPath('/dir1').exists).toBeTruthy()
             expect(new AbsPath('/nosuchfile').exists).toBeFalsy()
         })
-        test('isFile and isDir', () => {
+        test('isFile and isDir and isEmptyDir', () => {
+            expect(new AbsPath('/dir1').isEmptyDir).toBeFalsy()
+            expect(new AbsPath('/emptydir').isEmptyDir).toBeTruthy()
+
             expect(new AbsPath('/dir1').isDir).toBeTruthy()
             expect(new AbsPath('/dir1').isFile).toBeFalsy()
 
             expect(new AbsPath('/dir1/f').isFile).toBeTruthy()
             expect(new AbsPath('/dir1/f').isDir).toBeFalsy()
+            expect(new AbsPath('/dir1/f').isEmptyDir).toBeFalsy()
 
             expect(new AbsPath('/base/symlink_to_file1').exists).toBeTruthy()
             expect(new AbsPath('/base/symlink_to_file1').isSymLink).toBeTruthy()

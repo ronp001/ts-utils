@@ -207,6 +207,20 @@ export class AbsPath {
     }
 
     /**
+     * @returns true if a directory, false otherwise
+     */
+    public get isEmptyDir(): boolean {
+        if (this.abspath == null) return false
+        if (!this.isDir) return false
+        try {
+            const files = fs.readdirSync(this.abspath)
+            return files.length == 0
+        } catch (e) {
+            return false
+        }
+    }
+
+    /**
      * @returns true if a symbolic link, false otherwise
      */
     public get isSymLink(): boolean {

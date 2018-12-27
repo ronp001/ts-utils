@@ -83,6 +83,10 @@ export declare class AbsPath {
      */
     readonly isDir: boolean;
     /**
+     * @returns true if a directory, false otherwise
+     */
+    readonly isEmptyDir: boolean;
+    /**
      * @returns true if a symbolic link, false otherwise
      */
     readonly isSymLink: boolean;
