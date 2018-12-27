@@ -105,5 +105,24 @@ describe('git logic', () => {
         expect(remotes[1].name).toEqual("remote2")
         expect(remotes[1].url).toEqual("url2")
 
+        gl.remove_remote("remote2")
+        remotes = gl.get_remotes()
+        expect(remotes.length).toEqual(1)
+        expect(remotes[0].name).toEqual("remote1")
+
+        gl.rename_remote('remote1', 'remote0')
+        remotes = gl.get_remotes()
+        expect(remotes.length).toEqual(1)
+        expect(remotes[0].name).toEqual("remote0")
+    })
+
+    test('clone', () => {
+        const cloned_path = tmpdir.add('proj2')
+        let gl = new GitLogic(cloned_path)
+        expect(gl.is_repo).toBeFalsy()
+        expect(cloned_path.add('.git').isDir).toBeFalsy()
+        gl.clone_from(projdir.abspath)
+        expect(gl.is_repo).toBeTruthy()
+        expect(cloned_path.add('.git').isDir).toBeTruthy()
     })
 })

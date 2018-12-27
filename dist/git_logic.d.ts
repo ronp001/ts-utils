@@ -65,6 +65,10 @@ export declare class GitLogic {
     commit(comment: string): void;
     commit_allowing_empty(comment: string): void;
     add_remote(name: string, url: string, track_branch?: string): void;
+    remove_remote(name: string): void;
+    rename_remote(from_name: string, to_name: string): void;
     get_remotes(): Array<RemoteInfo>;
     fetch(remote?: string): void;
+    clone_from(remote_url: string | AbsPath): void;
+    git_cmd(cmd: string, args: string[], allowed_statuses?: number[]): string[];
 }

@@ -324,6 +324,16 @@ export class GitLogic {
         this.runcmd("remote", options)
     }
 
+    public remove_remote(name: string) {
+        let options = ["remove", name]
+        this.runcmd("remote", options)
+    }
+
+    public rename_remote(from_name: string, to_name: string) {
+        let options = ["rename", from_name, to_name]
+        this.runcmd("remote", options)
+    }
+
     public get_remotes(): Array<RemoteInfo> {
         let result: Array<RemoteInfo> = []
         let lines = this.to_lines(this.runcmd("remote", ["-v"]))
@@ -346,5 +356,30 @@ export class GitLogic {
             options = options.concat([remote])
         }
         this.runcmd("fetch", options)
+    }
+
+    public clone_from(remote_url: string | AbsPath) {
+        if (remote_url instanceof AbsPath) {
+            remote_url = "file://" + remote_url.abspath
+        }
+
+        if (!this.project_dir) {
+            throw new ErrorInvalidPath("GitLogic: project_dir was not set")
+        }
+
+        const target_dir = this.project_dir
+        this.project_dir = target_dir.parent.validate("is_dir")
+
+        if (!target_dir.abspath) {
+            throw new Error(`unexpected state: target_dir.abspath is ${target_dir.abspath}`)
+        }
+
+        this.runcmd("clone", [remote_url, target_dir.abspath])
+
+        this.project_dir = target_dir
+    }
+
+    public git_cmd(cmd: string, args: string[], allowed_statuses: number[] = []): string[] {
+        return this.to_lines(this.runcmd(cmd, args, allowed_statuses))
     }
 }
