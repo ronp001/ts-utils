@@ -20,9 +20,16 @@ export interface RemoteInfo {
     name: string;
     url: string;
 }
+export declare type GitLogicConstructionArgs = {
+    log_function?: (...args: any[]) => void;
+    error_function?: (...args: any[]) => void;
+    silent?: boolean;
+};
 export declare class GitLogic {
     private log;
-    constructor(path?: AbsPath, log_function?: (...args: any[]) => void);
+    private error;
+    private silent;
+    constructor(path?: AbsPath, log_function_or_args?: ((...args: any[]) => void) | GitLogicConstructionArgs);
     auto_connect(): void;
     private _path;
     project_dir: AbsPath;
@@ -64,11 +71,16 @@ export declare class GitLogic {
     check_ignore(path: string): boolean;
     commit(comment: string): void;
     commit_allowing_empty(comment: string): void;
-    add_remote(name: string, url: string, track_branch?: string): void;
+    add_remote(name: string, url: string, args?: {
+        track_branch?: string;
+    }): void;
     remove_remote(name: string): void;
     rename_remote(from_name: string, to_name: string): void;
     get_remotes(): Array<RemoteInfo>;
     fetch(remote?: string): void;
-    clone_from(remote_url: string | AbsPath): void;
+    clone_from(remote_url: string | AbsPath, args?: {
+        as_remote?: string;
+        head_branch?: string;
+    }): void;
     git_cmd(cmd: string, args: string[], allowed_statuses?: number[]): string[];
 }

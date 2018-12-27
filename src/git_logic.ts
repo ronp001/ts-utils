@@ -1,4 +1,4 @@
-import { execFileSync } from "child_process"
+import { execFileSync, ExecFileSyncOptions } from "child_process"
 import { AbsPath } from "./path_helper"
 import { isArray } from "util";
 import * as _ from "lodash"
@@ -25,14 +25,40 @@ export interface RemoteInfo {
 }
 
 
+export type GitLogicConstructionArgs = {
+    log_function?: (...args: any[]) => void
+    error_function?: (...args: any[]) => void
+    silent?: boolean
+}
+
 export class GitLogic {
     private log: (...args: any[]) => void
+    private error: (...args: any[]) => void
+    private silent = false
 
-    public constructor(path?: AbsPath, log_function?: (...args: any[]) => void) {
+    public constructor(path?: AbsPath,
+        log_function_or_args?: ((...args: any[]) => void) | GitLogicConstructionArgs
+    ) {
         if (path != null) {
             this._path = path
         }
-        this.log = log_function ? log_function : console.log
+
+        let args: GitLogicConstructionArgs = {}
+
+        if (typeof (log_function_or_args) == "function") {
+            args.log_function = log_function_or_args
+        } else if (log_function_or_args != undefined) {
+            args = log_function_or_args
+        }
+
+        if (args.silent) {
+            this.log = () => { }
+            this.error = () => { }
+            this.silent = true
+        } else {
+            this.log = args.log_function ? args.log_function : console.log
+            this.error = args.error_function ? args.error_function : console.error
+        }
     }
 
     public auto_connect() {
@@ -75,12 +101,18 @@ export class GitLogic {
                 process.chdir(this._path.abspath)
             }
             this.log(dirinfo + chalk.blue("git " + [gitcmd].concat(args).join(" ")))
-            let result = execFileSync('git', [gitcmd].concat(args))
-            if (this.keep_color) {
-                this.log(result.toString())
-                this.keep_color = false
-            } else {
-                this.log(chalk.cyan(result.toString()))
+            let options: ExecFileSyncOptions = {}
+            if (this.silent) {
+                options.stdio = 'ignore'
+            }
+            let result = execFileSync('git', [gitcmd].concat(args), options) // returns stdout of executed command
+            if (result != null) {
+                if (this.keep_color) {
+                    this.log(result.toString())
+                    this.keep_color = false
+                } else {
+                    this.log(chalk.cyan(result.toString()))
+                }
             }
             return result
         } catch (e) {
@@ -89,7 +121,7 @@ export class GitLogic {
                 this.log(chalk.black(`git command returned with allowed status ${e.status}`))
                 return ""
             }
-            console.error(chalk.cyan(`git command failed: ${e}`))
+            this.error(chalk.cyan(`git command failed: ${e}`))
             throw e
         } finally {
             if (old_dir != null) {
@@ -316,10 +348,10 @@ export class GitLogic {
         this.runcmd("commit", ["--allow-empty", "-m", comment])
     }
 
-    public add_remote(name: string, url: string, track_branch?: string) {
+    public add_remote(name: string, url: string, args: { track_branch?: string } = {}) {
         let options = ["add", name, url]
-        if (track_branch) {
-            options = options.concat(["-t", track_branch])
+        if (args.track_branch) {
+            options = options.concat(["-t", args.track_branch])
         }
         this.runcmd("remote", options)
     }
@@ -358,7 +390,10 @@ export class GitLogic {
         this.runcmd("fetch", options)
     }
 
-    public clone_from(remote_url: string | AbsPath) {
+    public clone_from(remote_url: string | AbsPath, args: {
+        as_remote?: string,
+        head_branch?: string,
+    } = {}) {
         if (remote_url instanceof AbsPath) {
             remote_url = "file://" + remote_url.abspath
         }
@@ -374,7 +409,16 @@ export class GitLogic {
             throw new Error(`unexpected state: target_dir.abspath is ${target_dir.abspath}`)
         }
 
-        this.runcmd("clone", [remote_url, target_dir.abspath])
+        let git_args = [remote_url, target_dir.abspath]
+
+        if (args.as_remote) {
+            git_args = git_args.concat(['-o', args.as_remote])
+        }
+        if (args.head_branch) {
+            git_args = git_args.concat(['-b', args.head_branch])
+        }
+
+        this.runcmd("clone", git_args)
 
         this.project_dir = target_dir
     }
