@@ -33,7 +33,9 @@ export declare class GitLogic {
     auto_connect(): void;
     private _path;
     project_dir: AbsPath;
-    runcmd: (gitcmd: string, args?: string[], allowed_statuses?: number[]) => string | string[] | Buffer;
+    runcmd: (gitcmd: string, args?: string[], allowed_statuses?: number[], kwargs?: {
+        stdio?: any;
+    }) => string | string[] | Buffer;
     private keep_color;
     private _runcmd;
     readonly state: GitState;
@@ -68,7 +70,8 @@ export declare class GitLogic {
     add(path: string | string[]): void;
     ls_files_as_abspath(): AbsPath[];
     ls_files(): string[];
-    check_ignore(path: string): boolean;
+    check_ignore(path: string | AbsPath): boolean;
+    get_ignored_files(path: AbsPath): string[];
     commit(comment: string): void;
     commit_allowing_empty(comment: string): void;
     add_remote(name: string, url: string, args?: {
@@ -82,5 +85,7 @@ export declare class GitLogic {
         as_remote?: string;
         head_branch?: string;
     }): void;
-    git_cmd(cmd: string, args: string[], allowed_statuses?: number[]): string[];
+    git_cmd(cmd: string, args: string[], allowed_statuses?: number[], kwargs?: {
+        stdio?: any;
+    }): string[];
 }

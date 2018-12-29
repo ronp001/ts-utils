@@ -1,4 +1,4 @@
-import { execFileSync, ExecFileSyncOptions } from "child_process"
+import { execFileSync, ExecFileSyncOptions, spawn, spawnSync, SpawnSyncOptions } from "child_process"
 import { AbsPath } from "./path_helper"
 import { isArray } from "util";
 import * as _ from "lodash"
@@ -79,7 +79,9 @@ export class GitLogic {
     public runcmd = this._runcmd // allow mocking
     private keep_color: boolean = false
 
-    private _runcmd(gitcmd: string, args: string[] = [], allowed_statuses: number[] = []): Buffer | string | string[] {
+    private _runcmd(gitcmd: string, args: string[] = [], allowed_statuses: number[] = [],
+        kwargs: { stdio?: any, } = {}
+    ): Buffer | string | string[] {
         let old_dir: string | null = null
         if (this._path.abspath == null) {
             throw new ErrorNotConnectedToProject("GitLogic: command executed before setting project_dir")
@@ -101,10 +103,15 @@ export class GitLogic {
                 process.chdir(this._path.abspath)
             }
             this.log(dirinfo + chalk.blue("git " + [gitcmd].concat(args).join(" ")))
+
             let options: ExecFileSyncOptions = {}
             if (this.silent) {
                 options.stdio = 'ignore'
             }
+            if (kwargs.stdio) {
+                options.stdio = kwargs.stdio
+            }
+
             let result = execFileSync('git', [gitcmd].concat(args), options) // returns stdout of executed command
             if (result != null) {
                 if (this.keep_color) {
@@ -264,11 +271,12 @@ export class GitLogic {
     public to_lines(buf: Buffer | string[] | string): string[] {
         let result: string[]
         if (buf instanceof Buffer) {
-            result = buf.toString().split("\n")
+            const str = buf.toString()
+            result = str ? str.split("\n") : []
         } else if (buf instanceof Array) {
             result = buf
         } else {
-            result = buf.split("\n")
+            result = buf ? buf.split("\n") : []
         }
         return _.filter(result, (s: string) => { return s.length > 0 })
     }
@@ -324,21 +332,48 @@ export class GitLogic {
         return files
     }
 
-    public check_ignore(path: string): boolean {
+    public check_ignore(path: string | AbsPath): boolean {
         let lines: string[]
         let abspath = new AbsPath(path).realpath.abspath
 
         if (abspath == null) {
-            throw new ErrorInvalidPath(path)
+            throw new ErrorInvalidPath(path.toString())
         }
 
         try {
             lines = this.to_lines(this.runcmd("check-ignore", [abspath], [1]))
         } catch (e) {
-            throw new ErrorCheckIgnoreFailed(e.message)
+            throw new ErrorCheckIgnoreFailed(e.message + ` (path: ${abspath})`)
         }
 
         return lines.indexOf(abspath) > -1
+    }
+
+    public get_ignored_files(path: AbsPath): string[] {
+        let lines: string[]
+        if (path.abspath == undefined) {
+            throw new Error("path.abspath is null")
+        }
+        try {
+            const finder_proc = spawn('find', [path.abspath], { stdio: 'pipe' })
+            console.log("finder_proc - spawnSync result:", finder_proc)
+            try {
+                lines = this.git_cmd('check-ignore', ['--stdin'], undefined, { stdio: [finder_proc.stdout, null, null] })
+
+                // console.log(finder_proc.stdout.toString())
+                // lines = []
+            } catch (e) {
+                console.log("git_cmd failed. finder_proc", finder_proc)
+                console.error(e)
+                throw (e)
+                // throw new ErrorCheckIgnoreFailed(e.message + ` using stdout of find (path: ${path.abspath})`)
+            }
+        } catch (e) {
+            console.log("find failed.")
+            console.error(e)
+            throw (e)
+        }
+        return this.to_lines(lines)
     }
 
     public commit(comment: string) {
@@ -423,7 +458,7 @@ export class GitLogic {
         this.project_dir = target_dir
     }
 
-    public git_cmd(cmd: string, args: string[], allowed_statuses: number[] = []): string[] {
-        return this.to_lines(this.runcmd(cmd, args, allowed_statuses))
+    public git_cmd(cmd: string, args: string[], allowed_statuses: number[] = [], kwargs: { stdio?: any } = {}): string[] {
+        return this.to_lines(this.runcmd(cmd, args, allowed_statuses, kwargs))
     }
 }

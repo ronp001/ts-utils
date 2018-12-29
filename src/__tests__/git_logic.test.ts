@@ -49,7 +49,7 @@ describe('git logic', () => {
         expect(gl2.is_repo).toBeFalsy()
     })
 
-    test('check ignore', () => {
+    test.only('check ignore', () => {
         let gl = new GitLogic(tmpdir.add('proj'));
         expect(gl.is_repo).toBeTruthy()
 
@@ -64,6 +64,11 @@ describe('git logic', () => {
         expect(gl.check_ignore(projdir.add('subdir/ignored').abspath)).toBeTruthy()
         expect(gl.check_ignore(projdir.add('regularfile').abspath)).toBeFalsy()
         expect(gl.check_ignore(projdir.add('subdir/regfile2').abspath)).toBeFalsy()
+
+        const ignored = gl.get_ignored_files(projdir)
+        expect(ignored).toContain(projdir.add('ignored').abspath)
+        expect(ignored).toContain(projdir.add('subdir/ignored').abspath)
+        expect(ignored.length).toEqual(2)
     })
 
     test('ls files', () => {
