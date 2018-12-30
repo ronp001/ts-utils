@@ -18,20 +18,20 @@ export class MockFSHelper {
         if ( isString(file) ) {
             file = new AbsPath(file)
         }
-        if ( file.abspath == null ) {
+        if ( file._abspath == null ) {
             throw "file path is null"
         }
-        this.fs_structure[file.abspath] = file.contentsBuffer.toString() 
+        this.fs_structure[file._abspath] = file.contentsBuffer.toString() 
         return this
     }
 
     public addDirContents(dir: AbsPath, max_levels : number = 5) : MockFSHelper {
         for ( let entry of dir.dirContents || []) {
             if ( entry.isFile ) { 
-                if ( entry.abspath == null ) {
+                if ( entry._abspath == null ) {
                     throw "entry path is null"
                 }
-                this.fs_structure[entry.abspath] = entry.contentsBuffer.toString() 
+                this.fs_structure[entry._abspath] = entry.contentsBuffer.toString() 
             } else if ( entry.isDir && max_levels > 0) {
                 this.addDirContents(entry, max_levels-1)
             }
@@ -57,7 +57,7 @@ export class MockFSHelper {
         for ( let entry of dir.dirContents || []) {
             // console.log(entry.abspath)
             if ( entry.isFile ) { 
-                if ( with_contents_of && (with_contents_of[0] == '*' || _.includes(with_contents_of, entry.abspath))) {
+                if ( with_contents_of && (with_contents_of[0] == '*' || _.includes(with_contents_of, entry._abspath))) {
                     result[entry.basename] = entry.contentsBuffer.toString()
                 } else {
                     result[entry.basename] = "<file>"

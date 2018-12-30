@@ -37,7 +37,18 @@ export declare class GitLogic {
         stdio?: any;
     }) => string | string[] | Buffer;
     private keep_color;
+    private _old_dir;
+    private _chdir_to_repo;
+    private _restore_dir;
     private _runcmd;
+    private _paths_to_files_in_repo?;
+    analyze_repo_contents(include_unadded: boolean): void;
+    fast_is_file_in_repo(abspath: string): boolean;
+    get_all_files_in_repo(include_unadded?: boolean): string[];
+    get_all_ignored_files(): string[];
+    private _ignored_files_cache;
+    cache_ignored_files(): void;
+    check_ignore(path: string | AbsPath): boolean;
     readonly state: GitState;
     readonly has_head: boolean;
     readonly is_repo: boolean;
@@ -70,8 +81,6 @@ export declare class GitLogic {
     add(path: string | string[]): void;
     ls_files_as_abspath(): AbsPath[];
     ls_files(): string[];
-    check_ignore(path: string | AbsPath): boolean;
-    get_ignored_files(path: AbsPath): string[];
     commit(comment: string): void;
     commit_allowing_empty(comment: string): void;
     add_remote(name: string, url: string, args?: {

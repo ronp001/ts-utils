@@ -1,4 +1,4 @@
-import { execFileSync, ExecFileSyncOptions, spawn, spawnSync, SpawnSyncOptions } from "child_process"
+import { execFileSync, ExecFileSyncOptions, execSync } from "child_process"
 import { AbsPath } from "./path_helper"
 import { isArray } from "util";
 import * as _ from "lodash"
@@ -79,29 +79,44 @@ export class GitLogic {
     public runcmd = this._runcmd // allow mocking
     private keep_color: boolean = false
 
-    private _runcmd(gitcmd: string, args: string[] = [], allowed_statuses: number[] = [],
-        kwargs: { stdio?: any, } = {}
-    ): Buffer | string | string[] {
-        let old_dir: string | null = null
-        if (this._path.abspath == null) {
-            throw new ErrorNotConnectedToProject("GitLogic: command executed before setting project_dir")
+    private _old_dir: string | null = null
+
+    private _chdir_to_repo(): string {
+        if (this._old_dir != null) {
+            throw new Error("_chdir_to_repo called twice without _restore_dir")
         }
         if (!this._path.isDir) {
             throw new ErrorInvalidPath("GitLogic: project_dir is not an existing directory")
         }
+
+        let dirinfo = ""
         try {
-            let dirinfo = ""
-            try {
-                if (process.cwd() != this._path.abspath) {
-                    old_dir = process.cwd()
-                    process.chdir(this._path.abspath)
-                    dirinfo = chalk.blue(`(in ${process.cwd()}) `)
-                } else {
-                    dirinfo = chalk.black(`(in ${process.cwd()}) `)
-                }
-            } catch (e) { // process.cwd() throws an error if the current directory does not exist
+            if (process.cwd() != this._path.abspath) {
+                this._old_dir = process.cwd()
                 process.chdir(this._path.abspath)
+                dirinfo = chalk.blue(`(in ${process.cwd()}) `)
+            } else {
+                dirinfo = chalk.black(`(in ${process.cwd()}) `)
             }
+        } catch (e) { // process.cwd() throws an error if the current directory does not exist
+            process.chdir(this._path.abspath)
+        }
+        return dirinfo
+    }
+
+    private _restore_dir() {
+        if (this._old_dir) {
+            process.chdir(this._old_dir)
+        }
+        this._old_dir = null
+    }
+
+    private _runcmd(gitcmd: string, args: string[] = [], allowed_statuses: number[] = [],
+        kwargs: { stdio?: any, } = {}
+    ): Buffer | string | string[] {
+
+        try {
+            const dirinfo = this._chdir_to_repo()
             this.log(dirinfo + chalk.blue("git " + [gitcmd].concat(args).join(" ")))
 
             let options: ExecFileSyncOptions = {}
@@ -131,11 +146,72 @@ export class GitLogic {
             this.error(chalk.cyan(`git command failed: ${e}`))
             throw e
         } finally {
-            if (old_dir != null) {
-                process.chdir(old_dir)
-            }
+            this._restore_dir()
         }
     }
+
+    private _paths_to_files_in_repo?: { [key: string]: boolean } = undefined
+
+    public analyze_repo_contents(include_unadded: boolean) {
+        this._paths_to_files_in_repo = {}
+        const files = this.get_all_files_in_repo(include_unadded)
+        for (const file of files) {
+            const abspath = this._path.add(file)
+            this._paths_to_files_in_repo[abspath.abspath] = true
+        }
+    }
+
+    public fast_is_file_in_repo(abspath: string): boolean {
+        if (this._paths_to_files_in_repo == undefined) {
+            throw Error("fast_is_file_in_repo() called before call to analyze_repo_contents()")
+        }
+        return this._paths_to_files_in_repo[abspath] == true
+    }
+
+    public get_all_files_in_repo(include_unadded: boolean = true): string[] {
+        let opts = ['-cm']
+        if (include_unadded) {
+            opts = opts.concat(['-o', '--exclude-standard'])
+        }
+        const out = this._runcmd('ls-files', opts)
+        return this.to_lines(out)
+    }
+
+    public get_all_ignored_files(): string[] {
+        try {
+            this._chdir_to_repo()
+
+            const cmd = `find ${this._path.abspath} -mindepth 1  | git check-ignore --stdin`
+            // console.log("cmd:", cmd, execSync(`find ${this._path.abspath}`).toString())
+            const output = execSync(cmd)
+            return this.to_lines(output)
+        } finally {
+            this._restore_dir()
+        }
+    }
+
+    private _ignored_files_cache: { [key: string]: boolean } = {}
+    public cache_ignored_files() {
+        const ignored_files = this.get_all_ignored_files()
+        this._ignored_files_cache = {}
+        for (const file of ignored_files) {
+            this._ignored_files_cache[file] = true
+        }
+    }
+
+    public check_ignore(path: string | AbsPath): boolean {
+        let lines: string[]
+        let abspath = new AbsPath(path).realpath.abspath
+
+        try {
+            lines = this.to_lines(this.runcmd("check-ignore", [abspath], [1]))
+        } catch (e) {
+            throw new ErrorCheckIgnoreFailed(e.message + ` (path: ${abspath})`)
+        }
+
+        return lines.indexOf(abspath) > -1
+    }
+
 
     public get state(): GitState {
         if (!this._path.isSet) return GitState.Undefined
@@ -332,50 +408,6 @@ export class GitLogic {
         return files
     }
 
-    public check_ignore(path: string | AbsPath): boolean {
-        let lines: string[]
-        let abspath = new AbsPath(path).realpath.abspath
-
-        if (abspath == null) {
-            throw new ErrorInvalidPath(path.toString())
-        }
-
-        try {
-            lines = this.to_lines(this.runcmd("check-ignore", [abspath], [1]))
-        } catch (e) {
-            throw new ErrorCheckIgnoreFailed(e.message + ` (path: ${abspath})`)
-        }
-
-        return lines.indexOf(abspath) > -1
-    }
-
-    public get_ignored_files(path: AbsPath): string[] {
-        let lines: string[]
-        if (path.abspath == undefined) {
-            throw new Error("path.abspath is null")
-        }
-        try {
-            const finder_proc = spawn('find', [path.abspath], { stdio: 'pipe' })
-            console.log("finder_proc - spawnSync result:", finder_proc)
-            try {
-                lines = this.git_cmd('check-ignore', ['--stdin'], undefined, { stdio: [finder_proc.stdout, null, null] })
-
-                // console.log(finder_proc.stdout.toString())
-                // lines = []
-            } catch (e) {
-                console.log("git_cmd failed. finder_proc", finder_proc)
-                console.error(e)
-                throw (e)
-                // throw new ErrorCheckIgnoreFailed(e.message + ` using stdout of find (path: ${path.abspath})`)
-            }
-        } catch (e) {
-            console.log("find failed.")
-            console.error(e)
-            throw (e)
-        }
-        return this.to_lines(lines)
-    }
-
     public commit(comment: string) {
         this.runcmd("commit", ["-m", comment])
     }
@@ -439,10 +471,6 @@ export class GitLogic {
 
         const target_dir = this.project_dir
         this.project_dir = target_dir.parent.validate("is_dir")
-
-        if (!target_dir.abspath) {
-            throw new Error(`unexpected state: target_dir.abspath is ${target_dir.abspath}`)
-        }
 
         let git_args = [remote_url, target_dir.abspath]
 

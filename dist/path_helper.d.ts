@@ -18,7 +18,8 @@ export declare class AbsPath {
      * @returns array with an AbsPath object for each containing directory
      */
     static dirHierarchy(filepath: string): Array<AbsPath>;
-    readonly abspath: string | null;
+    readonly _abspath: string | null;
+    readonly abspath: string;
     /**
      *
      * @param from a string or AbsPath specifying an absolute path, or null

@@ -49,7 +49,7 @@ describe('git logic', () => {
         expect(gl2.is_repo).toBeFalsy()
     })
 
-    test.only('check ignore', () => {
+    test('check ignore', () => {
         let gl = new GitLogic(tmpdir.add('proj'));
         expect(gl.is_repo).toBeTruthy()
 
@@ -60,15 +60,19 @@ describe('git logic', () => {
         projdir.add('subdir').add('regfile2').saveStrSync('this file should not be ignored')
         projdir.add('subdir').add('ignored').saveStrSync('this file should be ignored')
 
-        expect(gl.check_ignore(projdir.add('ignored').abspath)).toBeTruthy()
-        expect(gl.check_ignore(projdir.add('subdir/ignored').abspath)).toBeTruthy()
-        expect(gl.check_ignore(projdir.add('regularfile').abspath)).toBeFalsy()
-        expect(gl.check_ignore(projdir.add('subdir/regfile2').abspath)).toBeFalsy()
+        expect(gl.check_ignore(projdir.add('ignored')._abspath)).toBeTruthy()
+        expect(gl.check_ignore(projdir.add('subdir/ignored')._abspath)).toBeTruthy()
+        expect(gl.check_ignore(projdir.add('regularfile')._abspath)).toBeFalsy()
+        expect(gl.check_ignore(projdir.add('subdir/regfile2')._abspath)).toBeFalsy()
 
-        const ignored = gl.get_ignored_files(projdir)
-        expect(ignored).toContain(projdir.add('ignored').abspath)
-        expect(ignored).toContain(projdir.add('subdir/ignored').abspath)
+        const ignored = gl.get_all_ignored_files()
+        expect(ignored).toContain(projdir.add('ignored')._abspath)
+        expect(ignored).toContain(projdir.add('subdir/ignored')._abspath)
         expect(ignored.length).toEqual(2)
+
+        gl.analyze_repo_contents(true)
+        expect(gl.fast_is_file_in_repo(projdir.add('regularfile').abspath)).toBeTruthy()
+        expect(gl.fast_is_file_in_repo(projdir.add('ignored').abspath)).toBeFalsy()
     })
 
     test('ls files', () => {
@@ -78,7 +82,7 @@ describe('git logic', () => {
         const p = projdir.add('regularfile')
         p.saveStrSync('this file is not ignored')
 
-        gl.add(p.abspath)
+        gl.add(p._abspath)
         gl.commit('added a file')
 
         const files = gl.ls_files()
@@ -126,7 +130,7 @@ describe('git logic', () => {
         let gl = new GitLogic(cloned_path)
         expect(gl.is_repo).toBeFalsy()
         expect(cloned_path.add('.git').isDir).toBeFalsy()
-        gl.clone_from(projdir.abspath)
+        gl.clone_from(projdir._abspath)
         expect(gl.is_repo).toBeTruthy()
         expect(cloned_path.add('.git').isDir).toBeTruthy()
     })
