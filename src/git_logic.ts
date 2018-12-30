@@ -151,25 +151,48 @@ export class GitLogic {
     }
 
     private _paths_to_files_in_repo?: { [key: string]: boolean } = undefined
+    private _analysis_includes_unadded: boolean = false
 
     /**
      * this method caches a list of all the files in the repo to support later calls to fast_is_file_in_repo()
      * @param include_unadded whether unignored files that were not added to the repo should be considered 'in repo'.
      * @param reset if false: do not run the analysis if has already been run on this repo
      */
-    public analyze_repo_contents(include_unadded: boolean, reset:boolean=true) {
+    public analyze_repo_contents(include_unadded: boolean, reset: boolean = true) {
         if (!reset && this._paths_to_files_in_repo != undefined) {
             return
         }
 
         this._paths_to_files_in_repo = {}
+        this._analysis_includes_unadded = include_unadded
         const files = this.get_all_files_in_repo(include_unadded)
         for (const file of files) {
             const abspath = this._path.add(file)
             this._paths_to_files_in_repo[abspath.abspath] = true
         }
+
+        // console.log(this._paths_to_files_in_repo)
     }
 
+    public orig_file_count = 0
+    public new_file_count = 0
+
+    public did_repo_filecount_change(): boolean {
+        if (this._paths_to_files_in_repo == undefined) {
+            throw Error("did_repo_filecount_change() called before call to analyze_repo_contents()")
+        }
+
+        const existing_count = Object.keys(this._paths_to_files_in_repo).length
+        const new_files = this.get_all_files_in_repo(this._analysis_includes_unadded)
+        const new_count = new_files.length
+
+        // console.log('existing files:', Object.keys(this._paths_to_files_in_repo))
+        // console.log('new files:', new_files)
+        this.orig_file_count = existing_count
+        this.new_file_count = new_count
+
+        return new_count != existing_count
+    }
     /**
      * checks whether a specific file is in the git repo.
      * call 'analyze_repo_contents' once before starting a series of calls to this method.
@@ -182,8 +205,8 @@ export class GitLogic {
         return this._paths_to_files_in_repo[abspath] == true
     }
 
-    public get_all_files_in_repo(include_unadded: boolean = true): string[] {
-        let opts = ['-cm']
+    public get_all_files_in_repo(include_unadded: boolean = false): string[] {
+        let opts = ['-c']
         if (include_unadded) {
             opts = opts.concat(['-o', '--exclude-standard'])
         }
