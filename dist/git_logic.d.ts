@@ -42,7 +42,17 @@ export declare class GitLogic {
     private _restore_dir;
     private _runcmd;
     private _paths_to_files_in_repo?;
-    analyze_repo_contents(include_unadded: boolean): void;
+    /**
+     * this method caches a list of all the files in the repo to support later calls to fast_is_file_in_repo()
+     * @param include_unadded whether unignored files that were not added to the repo should be considered 'in repo'.
+     * @param reset if false: do not run the analysis if has already been run on this repo
+     */
+    analyze_repo_contents(include_unadded: boolean, reset?: boolean): void;
+    /**
+     * checks whether a specific file is in the git repo.
+     * call 'analyze_repo_contents' once before starting a series of calls to this method.
+     * @param abspath the absolute path to the file (as a string)
+     */
     fast_is_file_in_repo(abspath: string): boolean;
     get_all_files_in_repo(include_unadded?: boolean): string[];
     get_all_ignored_files(): string[];

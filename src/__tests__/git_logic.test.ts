@@ -3,7 +3,7 @@ import * as mockfs from 'mock-fs'
 // import * as fs from 'fs'
 // import * as path from 'path'
 import _ from 'lodash';
-import { AbsPath, MockFSHelper } from "../index"
+import { AbsPath } from "../index"
 import { GitLogic } from '../git_logic';
 import * as tmp from 'tmp';
 

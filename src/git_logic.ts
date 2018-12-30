@@ -152,7 +152,16 @@ export class GitLogic {
 
     private _paths_to_files_in_repo?: { [key: string]: boolean } = undefined
 
-    public analyze_repo_contents(include_unadded: boolean) {
+    /**
+     * this method caches a list of all the files in the repo to support later calls to fast_is_file_in_repo()
+     * @param include_unadded whether unignored files that were not added to the repo should be considered 'in repo'.
+     * @param reset if false: do not run the analysis if has already been run on this repo
+     */
+    public analyze_repo_contents(include_unadded: boolean, reset:boolean=true) {
+        if (!reset && this._paths_to_files_in_repo != undefined) {
+            return
+        }
+
         this._paths_to_files_in_repo = {}
         const files = this.get_all_files_in_repo(include_unadded)
         for (const file of files) {
@@ -161,6 +170,11 @@ export class GitLogic {
         }
     }
 
+    /**
+     * checks whether a specific file is in the git repo.
+     * call 'analyze_repo_contents' once before starting a series of calls to this method.
+     * @param abspath the absolute path to the file (as a string)
+     */
     public fast_is_file_in_repo(abspath: string): boolean {
         if (this._paths_to_files_in_repo == undefined) {
             throw Error("fast_is_file_in_repo() called before call to analyze_repo_contents()")
