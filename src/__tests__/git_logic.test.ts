@@ -94,7 +94,7 @@ describe('git logic', () => {
     })
 
     test('remote', () => {
-        let gl = new GitLogic(tmpdir.add('proj'));
+        let gl = new GitLogic(tmpdir.add('proj'), { silent: true });
         expect(gl.is_repo).toBeTruthy()
 
         let remotes = gl.get_remotes()

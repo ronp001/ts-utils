@@ -120,9 +120,6 @@ export class GitLogic {
             this.log(dirinfo + chalk.blue("git " + [gitcmd].concat(args).join(" ")))
 
             let options: ExecFileSyncOptions = {}
-            if (this.silent) {
-                options.stdio = 'ignore'
-            }
             if (kwargs.stdio) {
                 options.stdio = kwargs.stdio
             }
