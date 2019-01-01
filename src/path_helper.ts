@@ -3,6 +3,15 @@ import * as fs from 'fs'
 import * as _ from 'lodash'
 var isBinaryFile = require("isbinaryfile")
 
+
+export function notnull<T>(arg: T | null | undefined, name?: string): T {
+    if (arg == null) {
+        const exp = name ? ` for ${name}` : ""
+        throw new Error(`unexpected value${exp}: ${arg}`)
+    }
+    return arg
+}
+
 /**
  * An immutable path object with utility methods to navigate the filesystem, get information and perform 
  * operations on the path (read,write,etc.)
@@ -382,7 +391,7 @@ export class AbsPath {
     /**
      * @returns file contents as an array of strings
      */
-    public get contentsString(): String {
+    public get contentsString(): string {
         if (this._abspath == null || !this.isFile) return ""
         return fs.readFileSync(this._abspath, 'utf8')
     }

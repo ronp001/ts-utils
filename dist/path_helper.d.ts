@@ -1,4 +1,5 @@
 /// <reference types="node" />
+export declare function notnull<T>(arg: T | null | undefined, name?: string): T;
 /**
  * An immutable path object with utility methods to navigate the filesystem, get information and perform
  * operations on the path (read,write,etc.)
@@ -137,7 +138,7 @@ export declare class AbsPath {
     /**
      * @returns file contents as an array of strings
      */
-    readonly contentsString: String;
+    readonly contentsString: string;
     /**
      * @returns file contents as a buffer object
      */
