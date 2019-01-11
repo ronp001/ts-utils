@@ -1,4 +1,4 @@
-import { execFileSync } from "child_process"
+import { execFileSync, ExecFileSyncOptions, execSync } from "child_process"
 import { AbsPath } from "./path_helper"
 import { isArray } from "util";
 import * as _ from "lodash"
@@ -19,14 +19,46 @@ export enum GitState {
     OpInProgress = "OpInProgress" // a rebase or merge operation is in progress
 }
 
+export interface RemoteInfo {
+    name: string,
+    url: string
+}
+
+
+export type GitLogicConstructionArgs = {
+    log_function?: (...args: any[]) => void
+    error_function?: (...args: any[]) => void
+    silent?: boolean
+}
+
 export class GitLogic {
     private log: (...args: any[]) => void
+    private error: (...args: any[]) => void
+    private silent = false
 
-    public constructor(path?: AbsPath, log_function?: (...args: any[]) => void) {
+    public constructor(path?: AbsPath,
+        log_function_or_args?: ((...args: any[]) => void) | GitLogicConstructionArgs
+    ) {
         if (path != null) {
             this._path = path
         }
-        this.log = log_function ? log_function : console.log
+
+        let args: GitLogicConstructionArgs = {}
+
+        if (typeof (log_function_or_args) == "function") {
+            args.log_function = log_function_or_args
+        } else if (log_function_or_args != undefined) {
+            args = log_function_or_args
+        }
+
+        if (args.silent) {
+            this.log = () => { }
+            this.error = () => { }
+            this.silent = true
+        } else {
+            this.log = args.log_function ? args.log_function : console.log
+            this.error = args.error_function ? args.error_function : console.error
+        }
     }
 
     public auto_connect() {
@@ -35,6 +67,7 @@ export class GitLogic {
             throw "not in git repo"
         }
         this.project_dir = gitroot
+        return this
     }
 
     private _path: AbsPath = new AbsPath(null)
@@ -47,34 +80,59 @@ export class GitLogic {
     public runcmd = this._runcmd // allow mocking
     private keep_color: boolean = false
 
-    private _runcmd(gitcmd: string, args: string[] = [], allowed_statuses: number[] = []): Buffer | string | string[] {
-        let old_dir: string | null = null
-        if (this._path.abspath == null) {
-            throw new ErrorNotConnectedToProject("GitLogic: command executed before setting project_dir")
+    private _old_dir: string | null = null
+
+    private _chdir_to_repo(): string {
+        if (this._old_dir != null) {
+            throw new Error("_chdir_to_repo called twice without _restore_dir")
         }
         if (!this._path.isDir) {
             throw new ErrorInvalidPath("GitLogic: project_dir is not an existing directory")
         }
+
+        let dirinfo = ""
         try {
-            let dirinfo = ""
-            try {
-                if (process.cwd() != this._path.abspath) {
-                    old_dir = process.cwd()
-                    process.chdir(this._path.abspath)
-                    dirinfo = chalk.blue(`(in ${process.cwd()}) `)
-                } else {
-                    dirinfo = chalk.black(`(in ${process.cwd()}) `)
-                }
-            } catch (e) { // process.cwd() throws an error if the current directory does not exist
+            if (process.cwd() != this._path.abspath) {
+                this._old_dir = process.cwd()
                 process.chdir(this._path.abspath)
-            }
-            this.log(dirinfo + chalk.blue("git " + [gitcmd].concat(args).join(" ")))
-            let result = execFileSync('git', [gitcmd].concat(args))
-            if (this.keep_color) {
-                this.log(result.toString())
-                this.keep_color = false
+                dirinfo = chalk.blue(`(in ${process.cwd()}) `)
             } else {
-                this.log(chalk.cyan(result.toString()))
+                dirinfo = chalk.black(`(in ${process.cwd()}) `)
+            }
+        } catch (e) { // process.cwd() throws an error if the current directory does not exist
+            process.chdir(this._path.abspath)
+        }
+        return dirinfo
+    }
+
+    private _restore_dir() {
+        if (this._old_dir) {
+            process.chdir(this._old_dir)
+        }
+        this._old_dir = null
+    }
+
+    private _runcmd(gitcmd: string, args: string[] = [], allowed_statuses: number[] = [],
+        kwargs: { stdio?: any, } = {}
+    ): Buffer | string | string[] {
+
+        try {
+            const dirinfo = this._chdir_to_repo()
+            this.log(dirinfo + chalk.blue("git " + [gitcmd].concat(args).join(" ")))
+
+            let options: ExecFileSyncOptions = {}
+            if (kwargs.stdio) {
+                options.stdio = kwargs.stdio
+            }
+
+            let result = execFileSync('git', [gitcmd].concat(args), options) // returns stdout of executed command
+            if (result != null) {
+                if (this.keep_color) {
+                    this.log(result.toString())
+                    this.keep_color = false
+                } else {
+                    this.log(chalk.cyan(result.toString()))
+                }
             }
             return result
         } catch (e) {
@@ -83,14 +141,116 @@ export class GitLogic {
                 this.log(chalk.black(`git command returned with allowed status ${e.status}`))
                 return ""
             }
-            console.error(chalk.cyan(`git command failed: ${e}`))
+            this.error(chalk.cyan(`git command failed: ${e}`))
             throw e
         } finally {
-            if (old_dir != null) {
-                process.chdir(old_dir)
-            }
+            this._restore_dir()
         }
     }
+
+    private _paths_to_files_in_repo?: { [key: string]: boolean } = undefined
+    private _analysis_includes_unadded: boolean = false
+
+    /**
+     * this method caches a list of all the files in the repo to support later calls to fast_is_file_in_repo()
+     * @param include_unadded whether unignored files that were not added to the repo should be considered 'in repo'.
+     * @param reset if false: do not run the analysis if has already been run on this repo
+     */
+    public analyze_repo_contents(include_unadded: boolean, reset: boolean = true) {
+        if (!reset && this._paths_to_files_in_repo != undefined) {
+            return
+        }
+
+        this._paths_to_files_in_repo = {}
+        this._analysis_includes_unadded = include_unadded
+        const files = this.get_all_files_in_repo(include_unadded)
+        for (const file of files) {
+            const abspath = this._path.add(file)
+            this._paths_to_files_in_repo[abspath.abspath] = true
+        }
+
+        // console.log(this._paths_to_files_in_repo)
+    }
+
+    public orig_file_count = 0
+    public new_file_count = 0
+
+    public did_repo_filecount_change(): boolean {
+        if (this._paths_to_files_in_repo == undefined) {
+            throw Error("did_repo_filecount_change() called before call to analyze_repo_contents()")
+        }
+
+        const existing_count = Object.keys(this._paths_to_files_in_repo).length
+        const new_files = this.get_all_files_in_repo(this._analysis_includes_unadded)
+        const new_count = new_files.length
+
+        // console.log('existing files:', Object.keys(this._paths_to_files_in_repo))
+        // console.log('new files:', new_files)
+        this.orig_file_count = existing_count
+        this.new_file_count = new_count
+
+        return new_count != existing_count
+    }
+    /**
+     * checks whether a specific file is in the git repo.
+     * call 'analyze_repo_contents' once before starting a series of calls to this method.
+     * @param abspath the absolute path to the file (as a string)
+     */
+    public fast_is_file_in_repo(abspath: string): boolean {
+        if (this._paths_to_files_in_repo == undefined) {
+            throw Error("fast_is_file_in_repo() called before call to analyze_repo_contents()")
+        }
+        // console.log("path:", abspath)
+        // console.log(this._paths_to_files_in_repo)
+        // console.log(this._paths_to_files_in_repo[abspath.toString()])
+        return this._paths_to_files_in_repo[abspath] == true
+    }
+
+    public get_all_files_in_repo(include_unadded: boolean = false): string[] {
+        let opts = ['-c']
+        if (include_unadded) {
+            opts = opts.concat(['-o', '--exclude-standard'])
+        }
+        const out = this._runcmd('ls-files', opts)
+        // console.log(this.to_lines(out))
+        return this.to_lines(out)
+    }
+
+    public get_all_ignored_files(): string[] {
+        try {
+            this._chdir_to_repo()
+
+            const cmd = `find ${this._path.abspath} -mindepth 1  | git check-ignore --stdin`
+            // console.log("cmd:", cmd, execSync(`find ${this._path.abspath}`).toString())
+            const output = execSync(cmd)
+            return this.to_lines(output)
+        } finally {
+            this._restore_dir()
+        }
+    }
+
+    private _ignored_files_cache: { [key: string]: boolean } = {}
+    public cache_ignored_files() {
+        const ignored_files = this.get_all_ignored_files()
+        this._ignored_files_cache = {}
+        for (const file of ignored_files) {
+            this._ignored_files_cache[file] = true
+        }
+    }
+
+    public check_ignore(path: string | AbsPath): boolean {
+        let lines: string[]
+        let abspath = new AbsPath(path).realpath.abspath
+
+        try {
+            lines = this.to_lines(this.runcmd("check-ignore", [abspath], [1]))
+        } catch (e) {
+            throw new ErrorCheckIgnoreFailed(e.message + ` (path: ${abspath})`)
+        }
+
+        return lines.indexOf(abspath) > -1
+    }
+
 
     public get state(): GitState {
         if (!this._path.isSet) return GitState.Undefined
@@ -226,11 +386,12 @@ export class GitLogic {
     public to_lines(buf: Buffer | string[] | string): string[] {
         let result: string[]
         if (buf instanceof Buffer) {
-            result = buf.toString().split("\n")
+            const str = buf.toString()
+            result = str ? str.split("\n") : []
         } else if (buf instanceof Array) {
             result = buf
         } else {
-            result = buf.split("\n")
+            result = buf ? buf.split("\n") : []
         }
         return _.filter(result, (s: string) => { return s.length > 0 })
     }
@@ -286,27 +447,85 @@ export class GitLogic {
         return files
     }
 
-    public check_ignore(path: string): boolean {
-        let lines: string[]
-        let abspath = new AbsPath(path).realpath.abspath
-
-        if (abspath == null) {
-            throw new ErrorInvalidPath(path)
-        }
-
-        try {
-            lines = this.to_lines(this.runcmd("check-ignore", [abspath], [1]))
-        } catch (e) {
-            throw new ErrorCheckIgnoreFailed(e.message)
-        }
-
-        return lines.indexOf(abspath) > -1
-    }
-
     public commit(comment: string) {
         this.runcmd("commit", ["-m", comment])
     }
     public commit_allowing_empty(comment: string) {
         this.runcmd("commit", ["--allow-empty", "-m", comment])
+    }
+
+    public add_remote(name: string, url: string, args: { track_branch?: string } = {}) {
+        let options = ["add", name, url]
+        if (args.track_branch) {
+            options = options.concat(["-t", args.track_branch])
+        }
+        this.runcmd("remote", options)
+    }
+
+    public remove_remote(name: string) {
+        let options = ["remove", name]
+        this.runcmd("remote", options)
+    }
+
+    public rename_remote(from_name: string, to_name: string) {
+        let options = ["rename", from_name, to_name]
+        this.runcmd("remote", options)
+    }
+
+    public get_remotes(): Array<RemoteInfo> {
+        let result: Array<RemoteInfo> = []
+        let lines = this.to_lines(this.runcmd("remote", ["-v"]))
+
+        for (let line of lines) {
+            const s1 = line.split("\t")
+            const name = s1[0]
+            const s2 = s1[1].split(" ")
+            const url = s2[0]
+            if (s2[1] == "(fetch)") {
+                result.push({ name: name, url: url })
+            }
+        }
+        return result
+    }
+
+    public fetch(remote?: string) {
+        let options: Array<string> = []
+        if (remote) {
+            options = options.concat([remote])
+        }
+        this.runcmd("fetch", options)
+    }
+
+    public clone_from(remote_url: string | AbsPath, args: {
+        as_remote?: string,
+        head_branch?: string,
+    } = {}) {
+        if (remote_url instanceof AbsPath) {
+            remote_url = "file://" + remote_url.abspath
+        }
+
+        if (!this.project_dir) {
+            throw new ErrorInvalidPath("GitLogic: project_dir was not set")
+        }
+
+        const target_dir = this.project_dir
+        this.project_dir = target_dir.parent.validate("is_dir")
+
+        let git_args = [remote_url, target_dir.abspath]
+
+        if (args.as_remote) {
+            git_args = git_args.concat(['-o', args.as_remote])
+        }
+        if (args.head_branch) {
+            git_args = git_args.concat(['-b', args.head_branch])
+        }
+
+        this.runcmd("clone", git_args)
+
+        this.project_dir = target_dir
+    }
+
+    public git_cmd(cmd: string, args: string[], allowed_statuses: number[] = [], kwargs: { stdio?: any } = {}): string[] {
+        return this.to_lines(this.runcmd(cmd, args, allowed_statuses, kwargs))
     }
 }

@@ -1,4 +1,5 @@
 /// <reference types="node" />
+export declare function notnull<T>(arg: T | null | undefined, name?: string): T;
 /**
  * An immutable path object with utility methods to navigate the filesystem, get information and perform
  * operations on the path (read,write,etc.)
@@ -18,7 +19,8 @@ export declare class AbsPath {
      * @returns array with an AbsPath object for each containing directory
      */
     static dirHierarchy(filepath: string): Array<AbsPath>;
-    readonly abspath: string | null;
+    readonly _abspath: string | null;
+    readonly abspath: string;
     /**
      *
      * @param from a string or AbsPath specifying an absolute path, or null
@@ -83,6 +85,10 @@ export declare class AbsPath {
      */
     readonly isDir: boolean;
     /**
+     * @returns true if a directory, false otherwise
+     */
+    readonly isEmptyDir: boolean;
+    /**
      * @returns true if a symbolic link, false otherwise
      */
     readonly isSymLink: boolean;
@@ -132,7 +138,7 @@ export declare class AbsPath {
     /**
      * @returns file contents as an array of strings
      */
-    readonly contentsString: String;
+    readonly contentsString: string;
     /**
      * @returns file contents as a buffer object
      */

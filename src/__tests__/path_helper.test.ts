@@ -34,7 +34,8 @@ let simfs = new MockFSHelper({
         '12file1': "this is 12file1",
         '12file2': "this is 12file2",
         'f': "f in /dir1/dir12",
-    }
+    },
+    '/emptydir': {}
 })
 
 // Prepare path_helper.ts for inclusion in the mocked filesystem
@@ -100,7 +101,7 @@ describe("AbsPath", () => {
     test('construction', () => {
         let ph = new AbsPath('/');
         expect(ph).toBeInstanceOf(AbsPath)
-        expect(new AbsPath('/').abspath).toEqual('/')
+        expect(new AbsPath('/')._abspath).toEqual('/')
     });
 
     describe("paths", () => {
@@ -113,31 +114,31 @@ describe("AbsPath", () => {
 
         test('creating from relative path', () => {
             process.chdir('/base/inner')
-            expect(new AbsPath('..').abspath).toEqual('/base')
-            expect(new AbsPath('../inner2').abspath).toEqual('/base/inner2')
+            expect(new AbsPath('..')._abspath).toEqual('/base')
+            expect(new AbsPath('../inner2')._abspath).toEqual('/base/inner2')
 
             process.chdir('/base')
-            expect(new AbsPath('inner2').abspath).toEqual('/base/inner2')
-            expect(new AbsPath('./inner2').abspath).toEqual('/base/inner2')
-            expect(new AbsPath('.').abspath).toEqual('/base')
-            expect(new AbsPath('./').abspath).toEqual('/base/')
-            expect(new AbsPath('.//').abspath).toEqual('/base/')
-            expect(new AbsPath('/inner2').abspath).toEqual('/inner2')
+            expect(new AbsPath('inner2')._abspath).toEqual('/base/inner2')
+            expect(new AbsPath('./inner2')._abspath).toEqual('/base/inner2')
+            expect(new AbsPath('.')._abspath).toEqual('/base')
+            expect(new AbsPath('./')._abspath).toEqual('/base/')
+            expect(new AbsPath('.//')._abspath).toEqual('/base/')
+            expect(new AbsPath('/inner2')._abspath).toEqual('/inner2')
         })
 
         test('factory method', () => {
             let p = AbsPath.fromStringAllowingRelative()
             expect(p.isDir).toBeTruthy()
-            expect(p.abspath).toEqual(process.cwd())
+            expect(p._abspath).toEqual(process.cwd())
 
             p = AbsPath.fromStringAllowingRelative('/')
-            expect(p.abspath).toEqual('/')
+            expect(p._abspath).toEqual('/')
 
             p = AbsPath.fromStringAllowingRelative('..')
-            expect(p.abspath).toEqual(new AbsPath(process.cwd()).parent.toString())
+            expect(p._abspath).toEqual(new AbsPath(process.cwd()).parent.toString())
 
             p = AbsPath.fromStringAllowingRelative('dir1')
-            expect(p.abspath).toEqual(new AbsPath(process.cwd()).add('dir1').toString())
+            expect(p._abspath).toEqual(new AbsPath(process.cwd()).add('dir1').toString())
         })
 
 
@@ -185,12 +186,16 @@ describe("AbsPath", () => {
             expect(new AbsPath('/dir1').exists).toBeTruthy()
             expect(new AbsPath('/nosuchfile').exists).toBeFalsy()
         })
-        test('isFile and isDir', () => {
+        test('isFile and isDir and isEmptyDir', () => {
+            expect(new AbsPath('/dir1').isEmptyDir).toBeFalsy()
+            expect(new AbsPath('/emptydir').isEmptyDir).toBeTruthy()
+
             expect(new AbsPath('/dir1').isDir).toBeTruthy()
             expect(new AbsPath('/dir1').isFile).toBeFalsy()
 
             expect(new AbsPath('/dir1/f').isFile).toBeTruthy()
             expect(new AbsPath('/dir1/f').isDir).toBeFalsy()
+            expect(new AbsPath('/dir1/f').isEmptyDir).toBeFalsy()
 
             expect(new AbsPath('/base/symlink_to_file1').exists).toBeTruthy()
             expect(new AbsPath('/base/symlink_to_file1').isSymLink).toBeTruthy()
@@ -280,11 +285,11 @@ describe("AbsPath", () => {
                 // for directories, this will be called twice: once on the way down, and once on the way up.
                 // for files:  the direction will be null
                 if (direction == "down") {
-                    found_down[e.abspath] = found_down[e.abspath] ? found_down[e.abspath] + 1 : 1
+                    found_down[e._abspath] = found_down[e._abspath] ? found_down[e._abspath] + 1 : 1
                 } else if (direction == "up") {
-                    found_up[e.abspath] = found_up[e.abspath] ? found_up[e.abspath] + 1 : 1
+                    found_up[e._abspath] = found_up[e._abspath] ? found_up[e._abspath] + 1 : 1
                 } else {
-                    found_file[e.abspath] = found_file[e.abspath] ? found_file[e.abspath] + 1 : 1
+                    found_file[e._abspath] = found_file[e._abspath] ? found_file[e._abspath] + 1 : 1
                 }
             })
 
