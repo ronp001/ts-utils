@@ -30,7 +30,7 @@ export declare class GitLogic {
     private error;
     private silent;
     constructor(path?: AbsPath, log_function_or_args?: ((...args: any[]) => void) | GitLogicConstructionArgs);
-    auto_connect(): void;
+    auto_connect(): this;
     private _path;
     project_dir: AbsPath;
     runcmd: (gitcmd: string, args?: string[], allowed_statuses?: number[], kwargs?: {

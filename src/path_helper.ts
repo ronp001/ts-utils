@@ -507,7 +507,7 @@ export class AbsPath {
             throw new Error(`rmFile - path is not set`)
         }
         if (!this.isFile) {
-            throw new Error(`rmFile - {$this.filepath} is not a file`)
+            throw new Error(`rmFile - ${this} is not a file`)
         }
         fs.unlinkSync(this._abspath)
     }

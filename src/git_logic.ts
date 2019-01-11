@@ -67,6 +67,7 @@ export class GitLogic {
             throw "not in git repo"
         }
         this.project_dir = gitroot
+        return this
     }
 
     private _path: AbsPath = new AbsPath(null)
@@ -199,6 +200,9 @@ export class GitLogic {
         if (this._paths_to_files_in_repo == undefined) {
             throw Error("fast_is_file_in_repo() called before call to analyze_repo_contents()")
         }
+        // console.log("path:", abspath)
+        // console.log(this._paths_to_files_in_repo)
+        // console.log(this._paths_to_files_in_repo[abspath.toString()])
         return this._paths_to_files_in_repo[abspath] == true
     }
 
@@ -208,6 +212,7 @@ export class GitLogic {
             opts = opts.concat(['-o', '--exclude-standard'])
         }
         const out = this._runcmd('ls-files', opts)
+        // console.log(this.to_lines(out))
         return this.to_lines(out)
     }
 
