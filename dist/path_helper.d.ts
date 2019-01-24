@@ -175,6 +175,16 @@ export declare class AbsPath {
     mkdirs(): void;
     rmrfdir(must_match: RegExp, remove_self?: boolean): void;
     readonly maxVer: number | null;
-    renameToNextVer(): string;
+    /**
+     * renames <path> to <path>.<n+1>, where <n> is the largest integer for which <path>.<n> exists
+     * if no file matching the form <path>.<n> is found, renames to <path>.1
+     *
+     * for example, if the current path is "/my/file", it will be renamed to:
+     *   /my/file.2   - if /my/file.1 exists
+     *   /my/file.3   - if /my/file.2 exists
+     *   /my/file.1   - if no such file exists
+     *   etc.
+     */
+    renameToNextVer(): AbsPath;
     readonly existingVersions: number[] | null;
 }

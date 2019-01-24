@@ -575,7 +575,17 @@ export class AbsPath {
         return max
     }
 
-    public renameToNextVer(): string {
+    /**
+     * renames <path> to <path>.<n+1>, where <n> is the largest integer for which <path>.<n> exists
+     * if no file matching the form <path>.<n> is found, renames to <path>.1
+     * 
+     * for example, if the current path is "/my/file", it will be renamed to:
+     *   /my/file.2   - if /my/file.1 exists
+     *   /my/file.3   - if /my/file.2 exists
+     *   /my/file.1   - if no such file exists
+     *   etc.
+     */
+    public renameToNextVer(): AbsPath {
         let current_max_ver: number | null = this.maxVer
 
         let newname: string
@@ -585,7 +595,7 @@ export class AbsPath {
             newname = this._abspath + `.${current_max_ver + 1}`
         }
         this.renameTo(newname)
-        return newname
+        return new AbsPath(newname)
     }
 
     public get existingVersions(): number[] | null {
