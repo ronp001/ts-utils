@@ -375,21 +375,23 @@ describe("AbsPath", () => {
             expect(p.isFile).toBeTruthy()
             expect(new AbsPath('/base/file1.1').isFile).toBeFalsy()
 
-            p.renameToNextVer()
+            let newname = p.renameToNextVer()
             expect(p.maxVer).toEqual(null)
             expect(p.isFile).toBeFalsy()
             expect(new AbsPath('/base/file1.1').isFile).toBeTruthy()
+            expect(newname).toEqual(new AbsPath('/base/file1.1'))
 
             p.saveStrSync("new contents")
             expect(p.isFile).toBeTruthy()
             expect(new AbsPath('/base/file1.1').isFile).toBeTruthy()
             expect(new AbsPath('/base/file1.2').isFile).toBeFalsy()
 
-            p.renameToNextVer()
+            newname = p.renameToNextVer()
             expect(new AbsPath('/base/file1').isFile).toBeFalsy()
             expect(new AbsPath('/base/file1.1').isFile).toBeTruthy()
             expect(new AbsPath('/base/file1.2').isFile).toBeTruthy()
             expect(new AbsPath('/base/file1.2').contentsLines).toEqual(['new contents'])
+            expect(newname).toEqual(new AbsPath('/base/file1.2'))
 
         })
     })
