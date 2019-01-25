@@ -1,6 +1,6 @@
 {
   "name": "@ronp001/ts-utils",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "description": "miscellaneous typescript modules",
   "repository": "http://github.com/ronp001/ts-utils",
   "author": "Ron Perry",
@@ -15,11 +15,11 @@
     "relink": "yarn unlink && yarn link",
     "test": "jest",
     "build": "tsc",
-    "build:production": "yarn clean; yarn build; yarn test; yarn pack",
+    "build:production": "yarn clean; yarn build; yarn test",
     "test:watch": "jest --watch",
     "nextver": "yarn version --patch",
     "preversion": "yarn build:production",
-    "postversion": "yarn checkout -b v${npm_package_version:?} && git push origin/v${npm_package_version:?} v${npm_package_version:?}"
+    "postversion": "git checkout -b v${npm_package_version:?} && git push origin/v${npm_package_version:?} v${npm_package_version:?}"
   },
   "files": [
     "dist/*"
