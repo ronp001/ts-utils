@@ -19,13 +19,15 @@
     "test:watch": "jest --watch",
     "nextver": "yarn version --patch",
     "preversion": "yarn build:production",
-    "postversion": "git checkout -b ${npm_package_version:?} && git push --set-upstream origin ${npm_package_version:?}"
+    "postversion": "git checkout -b ${npm_package_version:?} && git push --set-upstream origin ${npm_package_version:?}",
+    "finish_publishing": "git push --tags && yarn publish . --tag $npm_package_version && git push"
   },
   "files": [
     "dist/*"
   ],
   "dependencies": {
     "@types/lodash": "*",
+    "chalk": "^2.4.2",
     "commander": "^2.14.1",
     "isbinaryfile": "^3.0.2",
     "lodash": "^4.17.5"
