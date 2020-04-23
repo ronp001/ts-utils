@@ -20,7 +20,7 @@ export declare class AbsPath {
      */
     static dirHierarchy(filepath: string): Array<AbsPath>;
     readonly _abspath: string | null;
-    readonly abspath: string;
+    get abspath(): string;
     /**
      *
      * @param from a string or AbsPath specifying an absolute path, or null
@@ -33,7 +33,7 @@ export declare class AbsPath {
     /**
      * @return the basename of the path
      */
-    readonly basename: string;
+    get basename(): string;
     /**
      * @param other
      * @param must_be_contained_in_other
@@ -51,7 +51,7 @@ export declare class AbsPath {
     /**
      * @returns true if path is set, false if it is null
      */
-    readonly isSet: boolean;
+    get isSet(): boolean;
     /**
      *
      * @param filepath path segment to add
@@ -62,7 +62,7 @@ export declare class AbsPath {
     /**
      * @returns AbsPath of the parent dir. If path is root, returns AbsPath of root.
      */
-    readonly parent: AbsPath;
+    get parent(): AbsPath;
     /**
      * @param n how many levels up the hierarchy
      * @returns AbsPath of the directory which is <n> levels up.  (.parents(1) is the same is .parent)
@@ -71,33 +71,33 @@ export declare class AbsPath {
     /**
      * @returns true if root directory of the filesystem, false otherwise
      */
-    readonly isRoot: boolean;
+    get isRoot(): boolean;
     /**
      * @returns true if path is found in the filesystem, false otherwise
      */
-    readonly exists: boolean;
+    get exists(): boolean;
     /**
      * @returns true if a normal file, false otherwise
      */
-    readonly isFile: boolean;
+    get isFile(): boolean;
     /**
      * @returns true if a directory, false otherwise
      */
-    readonly isDir: boolean;
+    get isDir(): boolean;
     /**
      * @returns true if a directory, false otherwise
      */
-    readonly isEmptyDir: boolean;
+    get isEmptyDir(): boolean;
     /**
      * @returns true if a symbolic link, false otherwise
      */
-    readonly isSymLink: boolean;
+    get isSymLink(): boolean;
     /**
      * see https://www.npmjs.com/package/isbinaryfile
      *
      * @returns true if the file is binary, false otherwise
      */
-    readonly isBinaryFile: boolean;
+    get isBinaryFile(): boolean;
     /**
      * throws an exception if path validation fails.
      * @param t what to check for
@@ -122,31 +122,31 @@ export declare class AbsPath {
     /**
      * @returns an array of AbsPath objects, each one pointing to a containing directory
      */
-    readonly dirHierarchy: Array<AbsPath>;
+    get dirHierarchy(): Array<AbsPath>;
     /**
      * @returns an AbsPath pointing to the target of the symbolic link
      */
-    readonly symLinkTarget: AbsPath;
+    get symLinkTarget(): AbsPath;
     /**
      * @returns an AbsPath with symbolic links completely resolved
      */
-    readonly realpath: AbsPath;
+    get realpath(): AbsPath;
     /**
      * @returns file contents as an array of strings
      */
-    readonly contentsLines: Array<string>;
+    get contentsLines(): Array<string>;
     /**
      * @returns file contents as an array of strings
      */
-    readonly contentsString: string;
+    get contentsString(): string;
     /**
      * @returns file contents as a buffer object
      */
-    readonly contentsBuffer: Buffer;
+    get contentsBuffer(): Buffer;
     /**
      * @returns parsed contents of a JSON file or null if not a JSON file
      */
-    readonly contentsFromJSON: Object | null;
+    get contentsFromJSON(): Object | null;
     /**
      * store new contents in the file
      *
@@ -157,7 +157,7 @@ export declare class AbsPath {
      * @returns an array of AbsPath objects corresponding to each entry in the directory
      * or null if not a directory
      */
-    readonly dirContents: Array<AbsPath> | null;
+    get dirContents(): Array<AbsPath> | null;
     /**
      * Traverse the directory hierarchy and activate a callback for each entry.
      *
@@ -174,7 +174,7 @@ export declare class AbsPath {
     rmFile(): void;
     mkdirs(): void;
     rmrfdir(must_match: RegExp, remove_self?: boolean): void;
-    readonly maxVer: number | null;
+    get maxVer(): number | null;
     /**
      * renames <path> to <path>.<n+1>, where <n> is the largest integer for which <path>.<n> exists
      * if no file matching the form <path>.<n> is found, renames to <path>.1
@@ -186,5 +186,5 @@ export declare class AbsPath {
      *   etc.
      */
     renameToNextVer(): AbsPath;
-    readonly existingVersions: number[] | null;
+    get existingVersions(): number[] | null;
 }

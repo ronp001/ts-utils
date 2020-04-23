@@ -1,6 +1,6 @@
 {
   "name": "@ronp001/ts-utils",
-  "version": "3.0.6",
+  "version": "4.0.0",
   "description": "miscellaneous typescript modules",
   "repository": "http://github.com/ronp001/ts-utils",
   "author": "Ron Perry",
@@ -15,6 +15,7 @@
     "relink": "yarn unlink && yarn link",
     "test": "jest",
     "build": "tsc",
+    "tsc-version": "tsc --version",
     "build:production": "yarn clean; yarn build; yarn test",
     "test:watch": "jest --watch",
     "nextver": "yarn version --patch",
@@ -39,8 +40,9 @@
   },
   "dependencies": {
     "@types/lodash": "*",
+    "@types/node": "^13.13.2",
     "chalk": "^2.4.2",
-    "commander": "^2.14.1",
+    "commander": "^4.1.1",
     "isbinaryfile": "^3.0.2",
     "lodash": "^4.17.12"
   },
@@ -52,7 +54,7 @@
     "mock-fs": "^4.7.0",
     "tmp": "^0.0.33",
     "ts-jest": "^23.1.0",
-    "typescript": "^3.0.3"
+    "typescript": "^3.8.3"
   },
   "jest": {
     "transform": {
