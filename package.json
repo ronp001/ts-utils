@@ -1,6 +1,6 @@
 {
   "name": "@ronp001/ts-utils",
-  "version": "3.0.5",
+  "version": "3.0.6",
   "description": "miscellaneous typescript modules",
   "repository": "http://github.com/ronp001/ts-utils",
   "author": "Ron Perry",
@@ -25,12 +25,21 @@
   "files": [
     "dist/*"
   ],
+  "resolutions": {
+    "minimist": ">0.2.1",
+    "acorn": ">=5.7.4",
+    "kind-of": ">=6.0.3",
+    "tar": "^2.2.2",
+    "handlebars": ">=4.3.0",
+    "mem": ">=4.0.0",
+    "lodash": ">=4.17.12"
+  },
   "dependencies": {
     "@types/lodash": "*",
     "chalk": "^2.4.2",
     "commander": "^2.14.1",
     "isbinaryfile": "^3.0.2",
-    "lodash": "^4.17.5"
+    "lodash": "^4.17.12"
   },
   "devDependencies": {
     "@types/jest": "^22.1.2",
