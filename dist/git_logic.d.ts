@@ -32,7 +32,8 @@ export declare class GitLogic {
     constructor(path?: AbsPath, log_function_or_args?: ((...args: any[]) => void) | GitLogicConstructionArgs);
     auto_connect(): this;
     private _path;
-    project_dir: AbsPath;
+    get project_dir(): AbsPath;
+    set project_dir(path: AbsPath);
     runcmd: (gitcmd: string, args?: string[], allowed_statuses?: number[], kwargs?: {
         stdio?: any;
     }) => string | string[] | Buffer;
@@ -63,18 +64,18 @@ export declare class GitLogic {
     private _ignored_files_cache;
     cache_ignored_files(): void;
     check_ignore(path: string | AbsPath): boolean;
-    readonly state: GitState;
-    readonly has_head: boolean;
-    readonly is_repo: boolean;
+    get state(): GitState;
+    get has_head(): boolean;
+    get is_repo(): boolean;
     status(): void;
-    readonly parsed_status: string[];
-    readonly stash_list: string[];
-    readonly stash_count: number;
+    get parsed_status(): string[];
+    get stash_list(): string[];
+    get stash_count(): number;
     stash_with_untracked_excluding(dir_to_exclude: string): boolean;
     stash_pop(): void;
     init(): void;
-    readonly current_branch_or_null: string | null;
-    readonly current_branch: string;
+    get current_branch_or_null(): string | null;
+    get current_branch(): string;
     show_branching_graph(): void;
     create_branch(branch_name: string, branching_point: string): string;
     delete_branch(branch_name: string): string;
@@ -84,7 +85,7 @@ export declare class GitLogic {
     get_branch_description(branch: string): string[];
     merge(branch_name: string): void;
     rebase_branch_from_point_onto(branch: string, from_point: string, onto: string): string | string[] | Buffer;
-    readonly commit_count: number;
+    get commit_count(): number;
     get_tags_matching(pattern: string): string[];
     to_lines(buf: Buffer | string[] | string): string[];
     get_files_in_commit(commit: string): string[];
