@@ -148,6 +148,10 @@ export declare class AbsPath {
      */
     get contentsFromJSON(): Object | null;
     /**
+     * @returns parsed contents of a JSONC file (ie, json with comments) or null if not a JSON/JSONC file
+     */
+    get contentsFromJSONC(): Object | null;
+    /**
      * store new contents in the file
      *
      * @param contents a string with the new contents
