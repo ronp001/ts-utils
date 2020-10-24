@@ -1,6 +1,7 @@
 import * as path from 'path'
 import * as fs from 'fs'
 import * as _ from 'lodash'
+import stripJsonComments = require('strip-json-comments')
 var isBinaryFile = require("isbinaryfile")
 
 
@@ -413,6 +414,20 @@ export class AbsPath {
         let buf = this.contentsBuffer
         try {
             return JSON.parse(buf.toString())
+        } catch (e) {
+            return null
+        }
+    }
+
+    /**
+     * @returns parsed contents of a JSONC file (ie, json with comments) or null if not a JSON/JSONC file
+     */
+    public get contentsFromJSONC(): Object | null {
+        if (this._abspath == null || !this.isFile) return null
+        let buf = this.contentsBuffer
+        try {
+            const json = stripJsonComments(buf.toString())
+            return JSON.parse(json)
         } catch (e) {
             return null
         }
