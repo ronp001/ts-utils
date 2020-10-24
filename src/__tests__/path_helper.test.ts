@@ -338,6 +338,17 @@ describe("AbsPath", () => {
             expect(contents['a']).toEqual(1)
             expect(contents['b']).toEqual(2)
         })
+        test('contentsFromJSONC', () => {
+            let p = new AbsPath('/base/newfile')
+            p.saveStrSync(`{ 
+                "a": 1, // this is a comment
+                "b": 2
+             }`)
+            expect(p.contentsFromJSON).toBeNull()
+            let contents = p.contentsFromJSONC
+            expect(contents['a']).toEqual(1)
+            expect(contents['b']).toEqual(2)
+        })
     })
 
     describe("file versions", () => {
