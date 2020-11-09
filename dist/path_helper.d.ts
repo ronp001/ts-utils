@@ -165,14 +165,17 @@ export declare class AbsPath {
     /**
      * Traverse the directory hierarchy and activate a callback for each entry.
      *
-     * The hierarchy is traversed twice: first down, then up, allowing the callback
-     * function to accumulate data on the way down and perform operations on the way up.
+     * The 'traverse' parameter determines when callbacks are called on directories:
+     *      if set to "both" (default): the hierarchy is traversed twice: first down, then up, allowing the callback
+     *      function to accumulate data on the way down and perform operations on the way up.
+     *      if set to "down": callbacks will be ordered from parent to child directories
+     *      if set to "up": callbacks will be ordered from child to parent directories
      *
      * Aborts the traversal if the callback function returns true
      *
      * @param fn callback to activate
      */
-    foreachEntryInDir(fn: (entry: AbsPath, traversal_direction: "down" | "up" | null) => boolean | void): boolean;
+    foreachEntryInDir(fn: (entry: AbsPath, traversal_direction: "down" | "up" | null) => boolean | void, traverse?: "down" | "up" | "both"): boolean;
     renameTo(new_name: string): void;
     unlinkFile(): void;
     rmFile(): void;
