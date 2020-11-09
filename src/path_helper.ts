@@ -473,25 +473,28 @@ export class AbsPath {
     /**
      * Traverse the directory hierarchy and activate a callback for each entry.
      * 
-     * The hierarchy is traversed twice: first down, then up, allowing the callback
-     * function to accumulate data on the way down and perform operations on the way up.
+     * The 'traverse' parameter determines when callbacks are called on directories:
+     *      if set to "both" (default): the hierarchy is traversed twice: first down, then up, allowing the callback
+     *      function to accumulate data on the way down and perform operations on the way up.
+     *      if set to "down": callbacks will be ordered from parent to child directories
+     *      if set to "up": callbacks will be ordered from child to parent directories
      * 
      * Aborts the traversal if the callback function returns true
      * 
      * @param fn callback to activate
      */
-    public foreachEntryInDir(fn: (entry: AbsPath, traversal_direction: "down" | "up" | null) => boolean | void): boolean {
+    public foreachEntryInDir(fn: (entry: AbsPath, traversal_direction: "down" | "up" | null) => boolean | void, traverse: "down" | "up" | "both" = "both"): boolean {
         let entries = this.dirContents
         if (entries == null) return true
 
         for (let entry of entries) {
             if (entry.isDir) {
                 let abort
-                abort = fn(entry, "down")
+                if (traverse == "down" || traverse == "both") abort = fn(entry, "down")
                 if (abort) return true
-                abort = entry.foreachEntryInDir(fn)
+                abort = entry.foreachEntryInDir(fn, traverse)
                 if (abort) return true
-                abort = fn(entry, "up")
+                if (traverse == "up" || traverse == "both") abort = fn(entry, "up")
                 if (abort) return true
             } else {
                 let abort = fn(entry, null)

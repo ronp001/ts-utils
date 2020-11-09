@@ -305,6 +305,58 @@ describe("AbsPath", () => {
             expect(found_up['/base/inner/file-in-inner']).toBeUndefined()
         })
 
+        test('traversal up', () => {
+            let p = new AbsPath('/')
+            let found_up: { [key: string]: number } = {}
+            let found_file: { [key: string]: number } = {}
+
+            p.foreachEntryInDir((e: AbsPath, direction: "down" | "up" | null) => {
+                // for directories, this will be called twice: once on the way down, and once on the way up.
+                // for files:  the direction will be null
+                if (direction == "down") {
+                    throw new Error('traversal should only be up')
+                } else if (direction == "up") {
+                    found_up[e._abspath] = found_up[e._abspath] ? found_up[e._abspath] + 1 : 1
+                } else {
+                    found_file[e._abspath] = found_file[e._abspath] ? found_file[e._abspath] + 1 : 1
+                }
+            }, "up")
+
+            expect(found_file['/base/inner/file-in-inner']).toEqual(1)
+            expect(found_file['/dir1/dir11/f']).toEqual(1)
+            expect(found_up['/base/inner']).toEqual(1)
+
+            expect(found_file['/base/inner']).toBeUndefined()
+            expect(found_up['/base/inner/file-in-inner']).toBeUndefined()
+        })
+
+        test('traversal down', () => {
+            let p = new AbsPath('/')
+            let found_down: { [key: string]: number } = {}
+            let found_file: { [key: string]: number } = {}
+
+            p.foreachEntryInDir((e: AbsPath, direction: "down" | "up" | null) => {
+                // for directories, this will be called twice: once on the way down, and once on the way up.
+                // for files:  the direction will be null
+                if (direction == "down") {
+                    found_down[e._abspath] = found_down[e._abspath] ? found_down[e._abspath] + 1 : 1
+                } else if (direction == "up") {
+                    throw new Error('traversal should only be down')
+                } else {
+                    found_file[e._abspath] = found_file[e._abspath] ? found_file[e._abspath] + 1 : 1
+                }
+            }, "down")
+
+            console.log(found_down)
+
+            expect(found_file['/base/inner/file-in-inner']).toEqual(1)
+            expect(found_file['/dir1/dir11/f']).toEqual(1)
+            expect(found_down['/base/inner']).toEqual(1)
+
+            expect(found_file['/base/inner']).toBeUndefined()
+            expect(found_down['/base/inner/file-in-inner']).toBeUndefined()
+        })
+
         test('print traversal', () => {
             let p = new AbsPath('/')
             p.foreachEntryInDir((e: AbsPath, direction: "down" | "up" | null) => {
